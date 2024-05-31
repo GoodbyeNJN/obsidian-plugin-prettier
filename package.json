@@ -1,0 +1,23 @@
+{
+    "name": "obsidian-plugin-prettier",
+    "version": "1.0.0",
+    "description": "Format your notes with Prettier and custom formatting options.",
+    "main": "index.js",
+    "scripts": {},
+    "keywords": [
+        "obsidian",
+        "plugin",
+        "prettier"
+    ],
+    "author": "GoodbyeNJN",
+    "license": "MIT",
+    "dependencies": {
+        "prettier": "^3.2.5"
+    },
+    "devDependencies": {
+        "eslint": "^8.57.0",
+        "eslint-config-goodbyenjn": "^2.0.3",
+        "obsidian": "1.5.7-1",
+        "typescript": "^5.4.5"
+    }
+}
