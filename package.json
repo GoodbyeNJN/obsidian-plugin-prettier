@@ -2,22 +2,41 @@
     "name": "obsidian-plugin-prettier",
     "version": "1.0.0",
     "description": "Format your notes with Prettier and custom formatting options.",
-    "main": "index.js",
-    "scripts": {},
+    "main": "dist/main.js",
+    "scripts": {
+        "build": "rollup -c rollup.config.ts --configPlugin typescript",
+        "dev": "rollup -c rollup.config.ts --configPlugin typescript --watch"
+    },
     "keywords": [
         "obsidian",
         "plugin",
         "prettier"
     ],
-    "author": "GoodbyeNJN",
+    "author": {
+        "name": "GoodbyeNJN",
+        "email": "cc@fuckwall.cc",
+        "url": "https://github.com/GoodbyeNJN"
+    },
     "license": "MIT",
     "dependencies": {
         "prettier": "^3.2.5"
     },
     "devDependencies": {
+        "@rollup/plugin-node-resolve": "^15.2.3",
+        "@rollup/plugin-typescript": "^11.1.6",
+        "@types/node": "^20.12.11",
+        "dotenv": "^16.4.5",
         "eslint": "^8.57.0",
         "eslint-config-goodbyenjn": "^2.0.3",
         "obsidian": "1.5.7-1",
+        "rollup": "^4.18.0",
+        "tslib": "^2.6.3",
         "typescript": "^5.4.5"
+    },
+    "obsidian": {
+        "id": "prettier",
+        "name": "Prettier",
+        "isDesktopOnly": false,
+        "minAppVersion": "0.10.12"
     }
 }
