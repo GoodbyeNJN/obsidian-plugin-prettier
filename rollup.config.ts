@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { nodeResolve } from "@rollup/plugin-node-resolve";
+import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 
-import type { OutputOptions, Plugin, RollupOptions } from "rollup";
+import type { OutputBundle, OutputOptions, Plugin, RollupOptions } from "rollup";
 
 // eslint-disable-next-line import/order
 import "dotenv/config";
@@ -20,18 +20,22 @@ interface Manifest {
     minAppVersion: string;
 }
 
+interface OutputPluginApi {
+    getAllBundles: () => OutputBundle;
+}
+
 const isHotreloadEnabled = Boolean(
     process.env.ROLLUP_WATCH === "true" && process.env.OBSIDIAN_VAULT_PATH,
 );
 
-const generateManifest = async (): Promise<Manifest> => {
+const generateManifest = async (isDev?: boolean): Promise<Manifest> => {
     const packageJson = JSON.parse(await fs.promises.readFile("./package.json", "utf-8"));
     const { version, description, author, obsidian } = packageJson;
     const { id, name, isDesktopOnly, minAppVersion } = obsidian;
 
     return {
-        id: isHotreloadEnabled ? `${id}-dev` : id,
-        name: isHotreloadEnabled ? `${name} (Dev)` : name,
+        id: isDev ? `${id}-dev` : id,
+        name: isDev ? `${name} (Dev)` : name,
         version,
         author: author.name,
         authorUrl: author.url,
@@ -41,30 +45,81 @@ const generateManifest = async (): Promise<Manifest> => {
     };
 };
 
-const manifestPlugin = (): Plugin => {
+const output = (): Plugin<OutputPluginApi> => {
+    let bundles: OutputBundle = Object.create(null);
+
     return {
-        name: "plugin:manifest",
-        buildStart() {
-            this.addWatchFile("./package.json");
+        name: "plugin:output",
+        api: {
+            getAllBundles() {
+                return bundles;
+            },
+        },
+        generateBundle(options, bundle) {
+            bundles = { ...bundle };
+
+            for (const [k] of Object.entries(bundle)) {
+                delete bundle[k];
+            }
+        },
+    };
+};
+
+const outputMain = (): Plugin => {
+    let outputPluginApi: OutputPluginApi | undefined;
+
+    return {
+        name: "plugin:output:main",
+        renderStart(outputOptions, inputOptions) {
+            const outputPlugin = inputOptions.plugins.find(
+                (plugin): plugin is Plugin<OutputPluginApi> => plugin.name === "plugin:output",
+            );
+
+            outputPluginApi = outputPlugin?.api;
+        },
+        generateBundle() {
+            if (!outputPluginApi) return;
+
+            const bundles = outputPluginApi.getAllBundles();
+            for (const [k, v] of Object.entries(bundles)) {
+                if (v.type !== "chunk" || k !== "main.js") continue;
+
+                const { code, exports, fileName, map, sourcemapFileName } = v;
+                this.emitFile({
+                    code,
+                    exports,
+                    fileName,
+                    map: map || undefined,
+                    sourcemapFileName: sourcemapFileName || undefined,
+                    type: "prebuilt-chunk",
+                });
+            }
+        },
+    };
+};
+
+const outputManifest = (isDev?: boolean): Plugin => {
+    return {
+        name: "plugin:output:manifest",
+        renderStart() {
+            this.addWatchFile("package.json");
         },
         async generateBundle() {
-            const manifest = await generateManifest();
+            const manifest = await generateManifest(isDev);
             const source = JSON.stringify(manifest, null, 4);
 
             this.emitFile({
-                type: "asset",
                 fileName: "manifest.json",
                 source,
+                type: "asset",
             });
         },
     };
 };
 
-const hotreloadPlugin = (): Plugin | undefined => {
-    if (!isHotreloadEnabled) return;
-
+const outputHotreload = (): Plugin => {
     return {
-        name: "plugin:hotreload",
+        name: "plugin:output:hotreload",
         async generateBundle(options) {
             const { dir } = options;
             if (!dir) return;
@@ -76,24 +131,38 @@ const hotreloadPlugin = (): Plugin | undefined => {
             if (isExists) return;
 
             this.emitFile({
-                type: "asset",
                 fileName: ".hotreload",
                 source: "",
+                type: "asset",
             });
         },
     };
 };
 
-const getOutputOptions = async (): Promise<OutputOptions[]> => {
-    const dirs = ["dist"];
+const getOutputOptions = async () => {
+    const outputs: OutputOptions[] = [
+        {
+            dir: ".",
+            plugins: [outputManifest(false)],
+        },
+        {
+            dir: "dist",
+            plugins: [outputMain(), outputManifest(false)],
+        },
+    ];
+
     if (isHotreloadEnabled) {
-        const { id } = await generateManifest();
-        const pluginDir = path.resolve(process.env.OBSIDIAN_VAULT_PATH!, ".obsidian/plugins", id);
-        dirs.push(pluginDir);
+        const { id } = await generateManifest(true);
+        const dir = path.resolve(process.env.OBSIDIAN_VAULT_PATH!, ".obsidian/plugins", id);
+
+        outputs.push({
+            dir,
+            plugins: [outputHotreload(), outputMain(), outputManifest(true)],
+        });
     }
 
-    return dirs.map(dir => ({
-        dir,
+    return outputs.map<OutputOptions>(output => ({
+        ...output,
         format: "cjs",
         generatedCode: "es2015",
     }));
@@ -119,7 +188,7 @@ const options: RollupOptions = {
         "@lezer/highlight",
         "@lezer/lr",
     ],
-    plugins: [typescript(), nodeResolve(), manifestPlugin(), hotreloadPlugin()],
+    plugins: [typescript(), resolve(), output()],
 };
 
 export default options;
