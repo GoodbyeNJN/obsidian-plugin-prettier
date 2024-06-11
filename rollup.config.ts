@@ -28,14 +28,16 @@ const isHotreloadEnabled = Boolean(
     process.env.ROLLUP_WATCH === "true" && process.env.OBSIDIAN_PLUGINS_DIR,
 );
 
-const generateManifest = async (isDev?: boolean): Promise<Manifest> => {
+const generateManifest = async (options?: { dev?: boolean }): Promise<Manifest> => {
+    const { dev = false } = options || {};
+
     const packageJson = JSON.parse(await fs.promises.readFile("./package.json", "utf-8"));
     const { version, description, author, obsidian } = packageJson;
     const { id, name, isDesktopOnly, minAppVersion } = obsidian;
 
     return {
-        id: isDev ? `${id}-dev` : id,
-        name: isDev ? `${name} (Dev)` : name,
+        id: dev ? `${id}-dev` : id,
+        name: dev ? `${name} (Dev)` : name,
         version,
         author: author.name,
         authorUrl: author.url,
@@ -98,14 +100,30 @@ const outputMain = (): Plugin => {
     };
 };
 
-const outputManifest = (isDev?: boolean): Plugin => {
+const outputStyles = (): Plugin => {
+    return {
+        name: "plugin:output:styles",
+        renderStart() {
+            this.addWatchFile("src/styles.css");
+        },
+        async generateBundle() {
+            this.emitFile({
+                fileName: "styles.css",
+                source: await fs.promises.readFile("src/styles.css", "utf-8"),
+                type: "asset",
+            });
+        },
+    };
+};
+
+const outputManifest = (...params: Parameters<typeof generateManifest>): Plugin => {
     return {
         name: "plugin:output:manifest",
         renderStart() {
             this.addWatchFile("package.json");
         },
         async generateBundle() {
-            const manifest = await generateManifest(isDev);
+            const manifest = await generateManifest(...params);
             const source = JSON.stringify(manifest, null, 4);
 
             this.emitFile({
@@ -143,21 +161,26 @@ const getOutputOptions = async () => {
     const outputs: OutputOptions[] = [
         {
             dir: ".",
-            plugins: [outputManifest(false)],
+            plugins: [outputManifest({ dev: false })],
         },
         {
             dir: "dist",
-            plugins: [outputMain(), outputManifest(false)],
+            plugins: [outputMain(), outputStyles(), outputManifest({ dev: false })],
         },
     ];
 
     if (isHotreloadEnabled) {
-        const { id } = await generateManifest(true);
+        const { id } = await generateManifest({ dev: true });
         const dir = path.resolve(process.env.OBSIDIAN_PLUGINS_DIR!, id);
 
         outputs.push({
             dir,
-            plugins: [outputHotreload(), outputMain(), outputManifest(true)],
+            plugins: [
+                outputHotreload(),
+                outputMain(),
+                outputStyles(),
+                outputManifest({ dev: true }),
+            ],
         });
     }
 

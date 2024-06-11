@@ -145,10 +145,7 @@ export class SettingsTab extends PluginSettingTab {
         setting.controlEl.append(valid);
 
         new TextAreaComponent(containerEl).then(component => {
-            component.inputEl.style.display = "block";
-            component.inputEl.style.width = "100%";
-            component.inputEl.style.height = "30em";
-            component.inputEl.style.marginBottom = "0.75em";
+            component.inputEl.className = "prettier-settings__textarea";
 
             component.setValue(this.stringifyFormatOptions()).onChange(value => {
                 const isValid = this.parseFormatOptions(value);
