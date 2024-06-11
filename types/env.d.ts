@@ -1,8 +1,8 @@
 declare namespace NodeJS {
     interface ProcessEnv {
         /**
-         * The path to the Obsidian vault.
+         * The path to the plugins directory in an Obsidian vault.
          */
-        readonly OBSIDIAN_VAULT_PATH?: string;
+        readonly OBSIDIAN_PLUGINS_DIR?: string;
     }
 }

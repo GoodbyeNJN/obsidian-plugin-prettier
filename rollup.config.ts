@@ -25,7 +25,7 @@ interface OutputPluginApi {
 }
 
 const isHotreloadEnabled = Boolean(
-    process.env.ROLLUP_WATCH === "true" && process.env.OBSIDIAN_VAULT_PATH,
+    process.env.ROLLUP_WATCH === "true" && process.env.OBSIDIAN_PLUGINS_DIR,
 );
 
 const generateManifest = async (isDev?: boolean): Promise<Manifest> => {
@@ -153,7 +153,7 @@ const getOutputOptions = async () => {
 
     if (isHotreloadEnabled) {
         const { id } = await generateManifest(true);
-        const dir = path.resolve(process.env.OBSIDIAN_VAULT_PATH!, ".obsidian/plugins", id);
+        const dir = path.resolve(process.env.OBSIDIAN_PLUGINS_DIR!, id);
 
         outputs.push({
             dir,

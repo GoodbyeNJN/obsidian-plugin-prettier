@@ -23,8 +23,8 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
     Formatted:
 
     ```md
-    - item 1
-    - item 2
+    -   item 1
+    -   item 2
     ```
 
 -   Optionally add trailing spaces that are removed after formatting. This ensures correct rendering in live preview mode.
@@ -33,14 +33,14 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
 
     ```md
     -
-    - [ ]
+    -   [ ]
     ```
 
     Formatted:
 
     ```md
-    - 
-    - [ ] 
+    -
+    -   [ ]
     ```
 
 -   Configurable Prettier formatting options. See [Prettier documentation](https://prettier.io/docs/en/configuration) for details.
@@ -147,13 +147,13 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
     pnpm dev
     ```
 
-    If the `OBSIDIAN_VAULT_PATH` environment variable is set, the built files will also be automatically copied to the `$OBSIDIAN_VAULT_PATH/.obsidian/plugins/prettier-dev` directory.
+    If the `OBSIDIAN_PLUGINS_DIR` environment variable is set, the built files will also be automatically copied to the `$OBSIDIAN_PLUGINS_DIR/prettier-dev` directory.
 
     ```bash
-    OBSIDIAN_VAULT_PATH=/path/to/your/vault pnpm dev
+    OBSIDIAN_PLUGINS_DIR=/path/to/the/plugins/directory pnpm dev
     ```
 
-    Alternatively, copy `.env.example` to `.env` and modify the `OBSIDIAN_VAULT_PATH` value.
+    Alternatively, copy `.env.example` to `.env` and modify the `OBSIDIAN_PLUGINS_DIR` value.
 
 ## License
 
