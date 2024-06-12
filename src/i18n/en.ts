@@ -3,7 +3,6 @@ import type { Lang } from "./types";
 export const EN: Lang = {
     "command:format-content-name": "Format all content",
     "command:format-selection-name": "Format selected content",
-    "setting:title": "Prettier",
     "setting:format-on-save-name": "Format on save",
     "setting:format-on-save-description": "Format the current content when saving the file.",
     "setting:format-code-block-name": "Format code blocks",

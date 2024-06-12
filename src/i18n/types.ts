@@ -1,7 +1,6 @@
 export interface Lang {
     "command:format-content-name": string;
     "command:format-selection-name": string;
-    "setting:title": string;
     "setting:format-on-save-name": string;
     "setting:format-on-save-description": string;
     "setting:format-code-block-name": string;

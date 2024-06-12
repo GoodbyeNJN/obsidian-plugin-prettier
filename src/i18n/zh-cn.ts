@@ -3,7 +3,6 @@ import type { Lang } from "./types";
 export const ZH_CN: Lang = {
     "command:format-content-name": "格式化全部内容",
     "command:format-selection-name": "格式化选定内容",
-    "setting:title": "Prettier",
     "setting:format-on-save-name": "保存时格式化",
     "setting:format-on-save-description": "保存文件时是否格式化当前内容。",
     "setting:format-code-block-name": "格式化代码块",

@@ -36,17 +36,12 @@ export class SettingsTab extends PluginSettingTab {
 
         containerEl.empty();
 
-        this.addTitle(containerEl);
         this.addFormatOnSave(containerEl);
         this.addFormatCodeBlock(containerEl);
         this.addRemoveExtraSpaces(containerEl);
         this.addAddTrailingSpaces(containerEl);
         this.addFormatOptions(containerEl);
         this.addResetButton(containerEl);
-    }
-
-    private addTitle(containerEl: HTMLElement) {
-        new Setting(containerEl).setName(fmt("setting:title")).setHeading();
     }
 
     private addFormatOnSave(containerEl: HTMLElement) {
