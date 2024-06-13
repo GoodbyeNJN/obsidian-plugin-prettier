@@ -16,15 +16,15 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
     Example:
 
     ```md
-    -   item 1
-    -   item 2
+    -␣␣␣item 1
+    -␣␣␣item 2
     ```
 
     Formatted:
 
     ```md
-    -   item 1
-    -   item 2
+    -␣item 1
+    -␣item 2
     ```
 
 -   Optionally add trailing spaces that are removed after formatting. This ensures correct rendering in live preview mode.
@@ -33,14 +33,14 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
 
     ```md
     -
-    -   [ ]
+    -␣[ ]
     ```
 
     Formatted:
 
     ```md
-    -
-    -   [ ]
+    -␣
+    -␣[ ]␣
     ```
 
 -   Configurable Prettier formatting options. See [Prettier documentation](https://prettier.io/docs/en/configuration) for details.
