@@ -1,5 +1,7 @@
 # obsidian-plugin-prettier
 
+![GitHub Release](https://img.shields.io/github/v/release/GoodbyeNJN/obsidian-plugin-prettier?label=version) ![GitHub Downloads](https://img.shields.io/github/downloads/GoodbyeNJN/obsidian-plugin-prettier/total)
+
 This is an [Obsidian](https://obsidian.md) plugin that uses [Prettier](https://prettier.io) to format notes.
 
 The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plugin-prettier. Since that repository is not actively maintained and does not declare an open source license, I have re-implemented its features and added some new features.
