@@ -21,7 +21,8 @@ interface Match {
     length: number;
 }
 
-const KEY = "prettier";
+const USE_PRETTIER_KEY = "prettier";
+const USE_FAST_MODE_KEY = "prettier-fast-mode";
 
 const REGEXP_UNORDERED_LIST_ITEMS_WITH_EXTRA_SPACES = /^([^\S\r\n]*[-*+])([^\S\r\n]+)/;
 const REGEXP_EMPTY_LIST_ITEMS_WITHOUT_TRAILING_SPACES =
@@ -45,6 +46,14 @@ export class Formatter {
     async formatContent(editor: Editor) {
         if (!this.shouldFormat()) return;
 
+        if (this.shouldUseFastMode()) {
+            await this.formatContentWithoutCursor(editor);
+        } else {
+            await this.formatContentWithCursor(editor);
+        }
+    }
+
+    async formatContentWithCursor(editor: Editor) {
         const raw = editor.getValue();
         const cursor = editor.getCursor();
         const { left, top } = editor.getScrollInfo();
@@ -72,6 +81,28 @@ export class Formatter {
 
         editor.setValue(modified);
         editor.setCursor(position);
+        editor.scrollTo(left, top);
+    }
+
+    async formatContentWithoutCursor(editor: Editor) {
+        const raw = editor.getValue();
+        const cursor = editor.getCursor();
+        const { left, top } = editor.getScrollInfo();
+
+        const formatted = await prettier.format(raw, this.getPrettierOptions());
+
+        let modified = formatted;
+        if (this.settings.removeExtraSpaces) {
+            [modified] = this.removeExtraSpaces(modified);
+        }
+        if (this.settings.addTrailingSpaces) {
+            [modified] = this.addTrailingSpaces(modified);
+        }
+
+        if (modified === raw) return;
+
+        editor.setValue(modified);
+        editor.setCursor(cursor);
         editor.scrollTo(left, top);
     }
 
@@ -170,9 +201,9 @@ export class Formatter {
     }
 
     getParserName(): Options["parser"] {
-        const { extension = ".md" } = this.app.workspace.getActiveFile() || {};
+        const { extension = "md" } = this.app.workspace.getActiveFile() || {};
         const language = pluginMarkdown.languages.find(({ extensions = [] }) =>
-            extensions.includes(extension),
+            extensions.includes(`.${extension}`),
         );
 
         return language?.name === "MDX" ? "mdx" : "markdown";
@@ -185,7 +216,19 @@ export class Formatter {
         }
 
         const metadata = this.app.metadataCache.getCache(path);
-        const value = Boolean(metadata?.frontmatter?.[KEY] ?? true);
+        const value = Boolean(metadata?.frontmatter?.[USE_PRETTIER_KEY] ?? true);
+
+        return value;
+    }
+
+    shouldUseFastMode() {
+        const { path } = this.app.workspace.getActiveFile() || {};
+        if (!path) {
+            return false;
+        }
+
+        const metadata = this.app.metadataCache.getCache(path);
+        const value = Boolean(metadata?.frontmatter?.[USE_FAST_MODE_KEY] ?? false);
 
         return value;
     }
