@@ -34,8 +34,7 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
     Example:
 
     ```md
-    -
-    -␣[ ]
+    -   -␣[ ]
     ```
 
     Formatted:
@@ -65,6 +64,16 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
     ```yaml
     ---
     prettier: false
+    ---
+    ```
+
+-   Supports enabling or disabling fast mode formatting for the current file separately in frontmatter. Disabled by default when not set.
+
+    Example:
+
+    ```yaml
+    ---
+    prettier-fast-mode: false
     ---
     ```
 
