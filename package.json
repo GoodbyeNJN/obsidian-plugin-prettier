@@ -1,6 +1,6 @@
 {
     "name": "obsidian-plugin-prettier",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Format your notes with Prettier and custom formatting options.",
     "main": "dist/main.js",
     "scripts": {

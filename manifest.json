@@ -1,7 +1,7 @@
 {
     "id": "prettier",
     "name": "Prettier",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "GoodbyeNJN",
     "authorUrl": "https://github.com/GoodbyeNJN",
     "description": "Format your notes with Prettier and custom formatting options.",
