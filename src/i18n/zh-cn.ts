@@ -1,6 +1,7 @@
 import type { Lang } from "./types";
 
 export const ZH_CN: Lang = {
+    "notice:format-too-slow": ["格式化耗时 ", " 秒，请考虑使用快速模式或缩减文件内容。"],
     "command:format-content-name": "格式化全部内容",
     "command:format-selection-name": "格式化选定内容",
     "setting:format-on-save-name": "保存时格式化",

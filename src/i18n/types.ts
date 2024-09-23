@@ -1,4 +1,5 @@
 export interface Lang {
+    "notice:format-too-slow": string[];
     "command:format-content-name": string;
     "command:format-selection-name": string;
     "setting:format-on-save-name": string;

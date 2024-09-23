@@ -1,9 +1,10 @@
-import { MarkdownView, Plugin } from "obsidian";
+import { MarkdownView, Notice, Plugin } from "obsidian";
 
 import { Formatter } from "./formatter";
 import { fmt } from "./i18n";
 import { getDefaultSettings } from "./model";
 import { SettingsTab } from "./setting";
+import { timer } from "./utils";
 
 import type { Settings } from "./model";
 import type { Command } from "obsidian";
@@ -35,7 +36,7 @@ export default class PrettierPlugin extends Plugin {
             id: "format-content",
             name: fmt("command:format-content-name"),
             editorCallback: async editor => {
-                await this.formatter.formatContent(editor);
+                await this.withPerformanceNotice(() => this.formatter.formatContent(editor));
             },
         });
 
@@ -44,7 +45,8 @@ export default class PrettierPlugin extends Plugin {
             name: fmt("command:format-selection-name"),
             editorCheckCallback: (checking, editor) => {
                 // TODO Check if the callback support async
-                !checking && this.formatter.formatSelection(editor);
+                !checking &&
+                    this.withPerformanceNotice(() => this.formatter.formatSelection(editor));
 
                 return editor.somethingSelected();
             },
@@ -59,7 +61,8 @@ export default class PrettierPlugin extends Plugin {
         this.originalSaveCallback = saveCallback;
         saveCommand.callback = async () => {
             const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-            view && (await this.formatter.formatOnSave(view.editor));
+            view &&
+                (await this.withPerformanceNotice(() => this.formatter.formatOnSave(view.editor)));
 
             await saveCallback();
         };
@@ -95,5 +98,18 @@ export default class PrettierPlugin extends Plugin {
                     );
             }),
         );
+    }
+
+    private async withPerformanceNotice(fn: () => void | Promise<void>) {
+        const stop = timer();
+
+        await fn();
+
+        const time = stop() / 1000;
+        if (time > 5) {
+            const _notice = new Notice(
+                `${fmt("notice:format-too-slow", 0)}${time.toFixed(2)}${fmt("notice:format-too-slow", 1)}`,
+            );
+        }
     }
 }

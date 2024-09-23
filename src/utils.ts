@@ -5,6 +5,12 @@ export const KEY = "plugin-prettier";
 export const logger = (...params: Parameters<typeof console.log>) =>
     console.log(`[${KEY}]`, ...params);
 
+export const timer = () => {
+    const start = performance.now();
+
+    return () => performance.now() - start;
+};
+
 export const createFragment = (...nodes: (Node | string)[]) => {
     const fragment = document.createDocumentFragment();
     nodes && fragment.append(...nodes);

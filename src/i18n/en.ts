@@ -1,6 +1,10 @@
 import type { Lang } from "./types";
 
 export const EN: Lang = {
+    "notice:format-too-slow": [
+        "Formatting took ",
+        " seconds, consider using fast mode or reducing the content.",
+    ],
     "command:format-content-name": "Format all content",
     "command:format-selection-name": "Format selected content",
     "setting:format-on-save-name": "Format on save",
