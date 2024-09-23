@@ -29,6 +29,7 @@
         "dotenv": "^16.4.5",
         "eslint": "^8.57.0",
         "eslint-config-goodbyenjn": "^2.0.3",
+        "fast-glob": "^3.3.2",
         "obsidian": "1.7.2",
         "rollup": "^4.22.4",
         "tslib": "^2.7.0",
