@@ -57,6 +57,17 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
     }
     ```
 
+-   Configurable ignore patterns. See [Prettier documentation](https://prettier.io/docs/en/ignore#ignoring-files-prettierignore) for details.
+
+    Example:
+
+    ```text
+    **/.git
+    **/.svn
+    **/.hg
+    **/node_modules
+    ```
+
 -   Supports enabling or disabling formatting for the current file separately in frontmatter. Enabled by default when not set.
 
     Example:
@@ -133,6 +144,19 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
     ```
 
     Formatting options passed to Prettier (in JSON format).
+
+-   Ignore patterns
+
+    Default:
+
+    ```text
+    **/.git
+    **/.svn
+    **/.hg
+    **/node_modules
+    ```
+
+    File patterns to ignore (relative to the vault directory).
 
 ## Development
 
