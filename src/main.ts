@@ -4,7 +4,7 @@ import { Formatter } from "./formatter";
 import { fmt } from "./i18n";
 import { getDefaultSettings } from "./model";
 import { SettingsTab } from "./setting";
-import { timer } from "./utils";
+import { timer } from "./utils/common";
 
 import type { Settings } from "./model";
 import type { Command } from "obsidian";

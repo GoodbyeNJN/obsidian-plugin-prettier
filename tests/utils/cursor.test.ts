@@ -1,4 +1,4 @@
-import { cursorOffsetToPosition, positionToCursorOffset } from "@/utils";
+import { cursorOffsetToPosition, positionToCursorOffset } from "@/utils/cursor";
 
 const a = `
 123456789

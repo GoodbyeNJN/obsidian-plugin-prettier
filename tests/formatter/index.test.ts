@@ -5,7 +5,7 @@ import fg from "fast-glob";
 
 import { Formatter } from "@/formatter";
 import { getDefaultSettings } from "@/model";
-import { cursorOffsetToPosition, positionToCursorOffset } from "@/utils";
+import { cursorOffsetToPosition, positionToCursorOffset } from "@/utils/cursor";
 
 import type PrettierPlugin from "@/main";
 import type { Settings } from "@/model";

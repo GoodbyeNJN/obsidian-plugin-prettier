@@ -1,10 +1,15 @@
-import fs from "node:fs";
 import path from "node:path";
 
-import resolve from "@rollup/plugin-node-resolve";
-import typescript from "@rollup/plugin-typescript";
+import commonjs from "@rollup/plugin-commonjs";
+import node from "@rollup/plugin-node-resolve";
+import { isArray, isPlainObject } from "remeda";
+import { defineConfig } from "rollup";
+import esbuild from "rollup-plugin-esbuild";
 
-import type { OutputBundle, OutputOptions, Plugin, RollupOptions } from "rollup";
+import { readFile, readJson } from "./src/utils/fs";
+
+import type PackageJson from "./package.json";
+import type { Plugin, RollupOptions } from "rollup";
 
 // eslint-disable-next-line import/order
 import "dotenv/config";
@@ -20,198 +25,137 @@ interface Manifest {
     minAppVersion: string;
 }
 
-interface OutputPluginApi {
-    getAllBundles: () => OutputBundle;
-}
+const isWatchMode = process.env.ROLLUP_WATCH === "true";
+const isHotreloadEnabled = isWatchMode && Boolean(process.env.OBSIDIAN_PLUGINS_DIR);
 
-const isHotreloadEnabled = Boolean(
-    process.env.ROLLUP_WATCH === "true" && process.env.OBSIDIAN_PLUGINS_DIR,
-);
+const START_MARK = "/* start */`\n";
+const END_MARK = "\n`/* end */";
 
-const generateManifest = async (options?: { dev?: boolean }): Promise<Manifest> => {
-    const { dev = false } = options || {};
+const wrap = (code: string) => `export default ${START_MARK}${code}${END_MARK};`;
 
-    const packageJson = JSON.parse(await fs.promises.readFile("./package.json", "utf-8"));
-    const { version, description, author, obsidian } = packageJson;
-    const { id, name, isDesktopOnly, minAppVersion } = obsidian;
+const strip = (code: string) => {
+    const start = code.indexOf(START_MARK) + START_MARK.length;
+    const end = code.indexOf(END_MARK);
 
-    return {
-        id: dev ? `${id}-dev` : id,
-        name: dev ? `${name} (Dev)` : name,
-        version,
-        author: author.name,
-        authorUrl: author.url,
-        description,
-        isDesktopOnly,
-        minAppVersion,
-    };
+    return code.slice(start, end);
 };
 
-const output = (): Plugin<OutputPluginApi> => {
-    let bundles: OutputBundle = Object.create(null);
+const pluginHotreload = (file: string): Plugin => ({
+    name: "plugin:hotreload",
+    async options(options: RollupOptions) {
+        if (!isHotreloadEnabled) return null;
 
-    return {
-        name: "plugin:output",
-        api: {
-            getAllBundles() {
-                return bundles;
-            },
-        },
-        generateBundle(options, bundle) {
-            bundles = { ...bundle };
+        const { obsidian } = await readJson<typeof PackageJson>("./package.json");
+        const id = `${obsidian.id}-dev`;
 
-            for (const [k] of Object.entries(bundle)) {
-                delete bundle[k];
-            }
-        },
-    };
-};
+        if (isPlainObject(options.output)) {
+            options.output = [options.output];
+        } else if (!isArray(options.output)) {
+            options.output = [];
+        }
 
-const outputMain = (): Plugin => {
-    let outputPluginApi: OutputPluginApi | undefined;
-
-    return {
-        name: "plugin:output:main",
-        renderStart(outputOptions, inputOptions) {
-            const outputPlugin = inputOptions.plugins.find(
-                (plugin): plugin is Plugin<OutputPluginApi> => plugin.name === "plugin:output",
-            );
-
-            outputPluginApi = outputPlugin?.api;
-        },
-        generateBundle() {
-            if (!outputPluginApi) return;
-
-            const bundles = outputPluginApi.getAllBundles();
-            for (const [k, v] of Object.entries(bundles)) {
-                if (v.type !== "chunk" || k !== "main.js") continue;
-
-                const { code, exports, fileName, map, sourcemapFileName } = v;
-                this.emitFile({
-                    code,
-                    exports,
-                    fileName,
-                    map: map || undefined,
-                    sourcemapFileName: sourcemapFileName || undefined,
-                    type: "prebuilt-chunk",
-                });
-            }
-        },
-    };
-};
-
-const outputStyles = (): Plugin => {
-    return {
-        name: "plugin:output:styles",
-        renderStart() {
-            this.addWatchFile("src/styles.css");
-        },
-        async generateBundle() {
-            this.emitFile({
-                fileName: "styles.css",
-                source: await fs.promises.readFile("src/styles.css", "utf-8"),
-                type: "asset",
-            });
-        },
-    };
-};
-
-const outputManifest = (...params: Parameters<typeof generateManifest>): Plugin => {
-    return {
-        name: "plugin:output:manifest",
-        renderStart() {
-            this.addWatchFile("package.json");
-        },
-        async generateBundle() {
-            const manifest = await generateManifest(...params);
-            const source = JSON.stringify(manifest, null, 4);
-
-            this.emitFile({
-                fileName: "manifest.json",
-                source,
-                type: "asset",
-            });
-        },
-    };
-};
-
-const outputHotreload = (): Plugin => {
-    return {
-        name: "plugin:output:hotreload",
-        async generateBundle(options) {
-            const { dir } = options;
-            if (!dir) return;
-
-            const isExists = await fs.promises
-                .access(path.resolve(dir, ".hotreload"))
-                .then(() => true)
-                .catch(() => false);
-            if (isExists) return;
-
-            this.emitFile({
-                fileName: ".hotreload",
-                source: "",
-                type: "asset",
-            });
-        },
-    };
-};
-
-const getOutputOptions = async () => {
-    const outputs: OutputOptions[] = [
-        {
-            dir: ".",
-            plugins: [outputManifest({ dev: false })],
-        },
-        {
-            dir: "dist",
-            plugins: [outputMain(), outputStyles(), outputManifest({ dev: false })],
-        },
-    ];
-
-    if (isHotreloadEnabled) {
-        const { id } = await generateManifest({ dev: true });
-        const dir = path.resolve(process.env.OBSIDIAN_PLUGINS_DIR!, id);
-
-        outputs.push({
-            dir,
-            plugins: [
-                outputHotreload(),
-                outputMain(),
-                outputStyles(),
-                outputManifest({ dev: true }),
-            ],
+        options.output.push({
+            ...(options.output[0] || {}),
+            file: path.resolve(process.env.OBSIDIAN_PLUGINS_DIR!, id, file),
         });
-    }
 
-    return outputs.map<OutputOptions>(output => ({
-        ...output,
-        format: "cjs",
-        generatedCode: "es2015",
-    }));
-};
-
-const options: RollupOptions = {
-    input: {
-        main: "src/main.ts",
+        return options;
     },
-    output: await getOutputOptions(),
-    external: [
-        "obsidian",
-        "electron",
-        "@codemirror/autocomplete",
-        "@codemirror/collab",
-        "@codemirror/commands",
-        "@codemirror/language",
-        "@codemirror/lint",
-        "@codemirror/search",
-        "@codemirror/state",
-        "@codemirror/view",
-        "@lezer/common",
-        "@lezer/highlight",
-        "@lezer/lr",
-    ],
-    plugins: [typescript(), resolve(), output()],
-};
+});
 
-export default options;
+export default defineConfig([
+    {
+        input: "src/main.ts",
+
+        output: [{ file: "dist/main.js", format: "cjs" }],
+
+        external: ["obsidian", "electron"],
+
+        plugins: [pluginHotreload("main.js"), commonjs(), esbuild(), node()],
+    },
+
+    {
+        input: "src/styles.css",
+
+        output: [{ file: "dist/styles.css" }],
+
+        plugins: [
+            pluginHotreload("styles.css"),
+            {
+                name: "plugin:styles",
+                async load(id) {
+                    const styles = await readFile(id);
+
+                    return wrap(styles);
+                },
+                renderStart() {
+                    this.addWatchFile("src/styles.css");
+                },
+                renderChunk(code) {
+                    return strip(code);
+                },
+            },
+        ],
+    },
+
+    {
+        input: "package.json",
+
+        output: [{ file: "dist/manifest.json" }].concat(
+            isWatchMode ? [] : { file: "manifest.json" },
+        ),
+
+        plugins: [
+            pluginHotreload("manifest.json"),
+            {
+                name: "plugin:manifest",
+                async load(path) {
+                    const packageJson = await readJson<typeof PackageJson>(path);
+
+                    const { version, description, author, obsidian } = packageJson;
+                    const { id, name, isDesktopOnly, minAppVersion } = obsidian;
+                    const manifest: Manifest = {
+                        id: isHotreloadEnabled ? `${id}-dev` : id,
+                        name: isHotreloadEnabled ? `${name} (Dev)` : name,
+                        version,
+                        author: author.name,
+                        authorUrl: author.url,
+                        description,
+                        isDesktopOnly,
+                        minAppVersion,
+                    };
+
+                    return wrap(JSON.stringify(manifest, null, 4));
+                },
+                renderStart() {
+                    this.addWatchFile("package.json");
+                },
+                renderChunk(code) {
+                    return strip(code);
+                },
+            },
+        ],
+    },
+
+    {
+        input: ".hotreload",
+
+        output: [{ file: "/dev/null" }],
+
+        plugins: [
+            pluginHotreload(".hotreload"),
+            {
+                name: "plugin:dot-hotreload",
+                resolveId(id) {
+                    return id;
+                },
+                load() {
+                    return wrap("");
+                },
+                async renderChunk() {
+                    return "";
+                },
+            },
+        ],
+    },
+]);
