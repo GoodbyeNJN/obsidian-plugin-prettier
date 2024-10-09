@@ -6,6 +6,7 @@ export interface Settings {
     removeExtraSpaces: boolean;
     addTrailingSpaces: boolean;
     formatOptions: Options;
+    ignorePatterns: string;
 }
 
 export const getDefaultFormatOptions = (): Options => ({
@@ -15,10 +16,19 @@ export const getDefaultFormatOptions = (): Options => ({
     singleQuote: true,
 });
 
+export const getDefaultIgnorePatterns = (): string =>
+    `
+**/.git
+**/.svn
+**/.hg
+**/node_modules
+`.trim();
+
 export const getDefaultSettings = (): Settings => ({
     formatOnSave: false,
     formatCodeBlock: false,
     removeExtraSpaces: false,
     addTrailingSpaces: false,
     formatOptions: getDefaultFormatOptions(),
+    ignorePatterns: getDefaultIgnorePatterns(),
 });

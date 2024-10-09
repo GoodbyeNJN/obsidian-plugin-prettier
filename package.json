@@ -20,6 +20,7 @@
     },
     "license": "MIT",
     "dependencies": {
+        "ignore": "^6.0.2",
         "prettier": "^3.3.3",
         "remeda": "^2.14.0"
     },

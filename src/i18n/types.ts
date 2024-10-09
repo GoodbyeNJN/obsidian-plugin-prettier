@@ -10,13 +10,11 @@ export interface Lang {
     "setting:remove-extra-spaces-description": string[];
     "setting:add-trailing-spaces-name": string;
     "setting:add-trailing-spaces-description": string;
+    "setting:reset-button-name": string;
     "setting:format-options-name": string;
     "setting:format-options-description": string[];
-    "setting:format-options-valid": string;
-    "setting:format-options-invalid": string;
-    "setting:reset-options-name": string;
-    "setting:reset-options-description": string;
-    "setting:reset-options-button": string;
+    "setting:ignore-patterns-name": string;
+    "setting:ignore-patterns-description": string[];
 }
 
 type KeysMatching<T, V> = { [K in keyof T]-?: T[K] extends V ? K : never }[keyof T];

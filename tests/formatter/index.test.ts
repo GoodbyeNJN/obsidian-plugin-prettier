@@ -23,7 +23,7 @@ const MockFile = vi.fn((filepath = "mock.md"): File => {
     const { base, ext, name } = path.parse(filepath);
     const info = {
         name: base,
-        path: base,
+        path: filepath,
         extension: ext.slice(1),
         basename: name,
     } satisfies Partial<TFile> as TFile;
@@ -90,16 +90,59 @@ describe.concurrent("Check if should format", () => {
         { frontmatter: {}, expected: true },
         { frontmatter: { prettier: true }, expected: true },
         { frontmatter: { prettier: false }, expected: false },
-    ])("With frontmatter: $frontmatter", ({ frontmatter, expected }, { expect }) => {
+    ])("With frontmatter: $frontmatter.prettier", ({ frontmatter, expected }, { expect }) => {
         const file = MockFile();
         file.metadata.frontmatter = frontmatter;
         const formatter = new Formatter(MockPrettierPlugin(file));
 
-        expect(formatter.shouldFormat()).toBe(expected);
+        expect(formatter.shouldUsePrettier()).toBe(expected);
     });
+
+    test.concurrent.for([
+        { settings: { ignorePatterns: "" }, expected: true },
+        { settings: { ignorePatterns: "!config/*" }, expected: true },
+        { settings: { ignorePatterns: "config/*" }, expected: false },
+    ])("With ignore patterns: $settings.ignorePatterns", ({ settings, expected }, { expect }) => {
+        const file = MockFile("config/test.md");
+        const formatter = new Formatter(MockPrettierPlugin(file, settings));
+
+        expect(formatter.shouldUsePrettier()).toBe(expected);
+    });
+
+    test.concurrent.for([
+        {
+            frontmatter: {},
+            settings: { ignorePatterns: "config/*" },
+            expected: false,
+        },
+        {
+            frontmatter: {},
+            settings: { ignorePatterns: "!config/*" },
+            expected: true,
+        },
+        {
+            frontmatter: { prettier: true },
+            settings: { ignorePatterns: "config/*" },
+            expected: true,
+        },
+        {
+            frontmatter: { prettier: false },
+            settings: { ignorePatterns: "!config/*" },
+            expected: false,
+        },
+    ])(
+        "With frontmatter: $frontmatter.prettier & patterns: $settings.ignorePatterns",
+        ({ frontmatter, settings, expected }, { expect }) => {
+            const file = MockFile("config/test.md");
+            file.metadata.frontmatter = frontmatter;
+            const formatter = new Formatter(MockPrettierPlugin(file, settings));
+
+            expect(formatter.shouldUsePrettier()).toBe(expected);
+        },
+    );
 });
 
-describe.concurrent("Check if should enable fast mode", () => {
+describe.concurrent("Check if should use fast mode", () => {
     test.concurrent.for([
         { frontmatter: {}, expected: false },
         { frontmatter: { "prettier-fast-mode": true }, expected: true },

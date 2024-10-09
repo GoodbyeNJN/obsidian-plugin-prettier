@@ -1,3 +1,4 @@
+import createIgnore from "ignore";
 import pluginBabel from "prettier/plugins/babel";
 import pluginEstree from "prettier/plugins/estree";
 import pluginHtml from "prettier/plugins/html";
@@ -6,11 +7,13 @@ import pluginPostcss from "prettier/plugins/postcss";
 import pluginTypescript from "prettier/plugins/typescript";
 import pluginYaml from "prettier/plugins/yaml";
 import prettier from "prettier/standalone";
+import { isDefined } from "remeda";
 
-import { cursorOffsetToPosition, positionToCursorOffset } from "./utils";
+import { cursorOffsetToPosition, positionToCursorOffset } from "./utils/cursor";
 
 import type PrettierPlugin from "./main";
 import type { Settings } from "./model";
+import type { Ignore } from "ignore";
 import type { App, Editor } from "obsidian";
 import type { Options } from "prettier";
 
@@ -31,6 +34,7 @@ const REGEXP_EMPTY_LIST_ITEMS_WITHOUT_TRAILING_SPACES =
 export class Formatter {
     private app: App;
     private settings: Settings;
+    private ignoreInstanceCache: Map<string, Ignore> = new Map();
 
     constructor(plugin: PrettierPlugin) {
         this.app = plugin.app;
@@ -44,7 +48,7 @@ export class Formatter {
     }
 
     async formatContent(editor: Editor) {
-        if (!this.shouldFormat()) return;
+        if (!this.shouldUsePrettier()) return;
 
         if (this.shouldUseFastMode()) {
             await this.formatContentWithoutCursor(editor);
@@ -107,7 +111,7 @@ export class Formatter {
     }
 
     async formatSelection(editor: Editor) {
-        if (!this.shouldFormat()) return;
+        if (!this.shouldUsePrettier()) return;
 
         const raw = editor.getSelection();
 
@@ -209,28 +213,38 @@ export class Formatter {
         return language?.name === "MDX" ? "mdx" : "markdown";
     }
 
-    shouldFormat() {
+    shouldUsePrettier() {
         const { path } = this.app.workspace.getActiveFile() || {};
-        if (!path) {
-            return false;
-        }
+        if (!path) return false;
 
         const metadata = this.app.metadataCache.getCache(path);
-        const value = Boolean(metadata?.frontmatter?.[USE_PRETTIER_KEY] ?? true);
+        const usePrettier = metadata?.frontmatter?.[USE_PRETTIER_KEY];
+        if (isDefined(usePrettier)) return Boolean(usePrettier);
 
-        return value;
+        const ignore = this.createIgnoreInstance(this.settings.ignorePatterns);
+
+        return !ignore.ignores(path);
     }
 
     shouldUseFastMode() {
         const { path } = this.app.workspace.getActiveFile() || {};
-        if (!path) {
-            return false;
-        }
+        if (!path) return false;
 
         const metadata = this.app.metadataCache.getCache(path);
-        const value = Boolean(metadata?.frontmatter?.[USE_FAST_MODE_KEY] ?? false);
+        const useFastMode = Boolean(metadata?.frontmatter?.[USE_FAST_MODE_KEY] ?? false);
 
-        return value;
+        return useFastMode;
+    }
+
+    private createIgnoreInstance(patterns: string) {
+        if (this.ignoreInstanceCache.has(patterns)) {
+            return this.ignoreInstanceCache.get(patterns)!;
+        }
+
+        const ignore = createIgnore({ allowRelativePaths: true }).add(patterns);
+        this.ignoreInstanceCache.set(patterns, ignore);
+
+        return ignore;
     }
 
     private match(text: string, regexp: RegExp) {

@@ -20,15 +20,17 @@ export const ZH_CN: Lang = {
     "setting:add-trailing-spaces-name": "添加尾部空格",
     "setting:add-trailing-spaces-description":
         "是否在空列表项的末尾添加空格，以确保在实时阅览模式下正确渲染。",
+    "setting:reset-button-name": "重置",
     "setting:format-options-name": "格式化选项",
     "setting:format-options-description": [
         "传递给 Prettier 的格式化选项（json 格式）。详情请参考 ",
         "Prettier 文档",
         "。",
     ],
-    "setting:format-options-valid": "✔️ 有效",
-    "setting:format-options-invalid": "❌ 无效",
-    "setting:reset-options-name": "重置选项",
-    "setting:reset-options-description": "重置为默认格式化选项。",
-    "setting:reset-options-button": "重置",
+    "setting:ignore-patterns-name": "忽略模式",
+    "setting:ignore-patterns-description": [
+        "格式化时要忽略的模式列表。如果当前文件通过 frontmatter 单独启用或禁用格式化，此设置将被忽略。详情请参考 ",
+        "Prettier 文档",
+        "。",
+    ],
 };

@@ -23,15 +23,17 @@ export const EN: Lang = {
     "setting:add-trailing-spaces-name": "Add trailing spaces",
     "setting:add-trailing-spaces-description":
         "Add spaces at the end of empty list items to ensure correct rendering in live preview mode.",
+    "setting:reset-button-name": "Reset",
     "setting:format-options-name": "Format options",
     "setting:format-options-description": [
         "Formatting options passed to Prettier (in JSON format). See ",
         "Prettier documentation",
         " for more details.",
     ],
-    "setting:format-options-valid": "✔️ Valid",
-    "setting:format-options-invalid": "❌ Invalid",
-    "setting:reset-options-name": "Reset options",
-    "setting:reset-options-description": "Reset to the default formatting options.",
-    "setting:reset-options-button": "Reset",
+    "setting:ignore-patterns-name": "Ignore patterns",
+    "setting:ignore-patterns-description": [
+        "List of glob patterns to ignore when formatting. If the current file has enabled or disabled formatting separately via frontmatter, this setting will be ignored. See ",
+        "Prettier documentation",
+        " for more details.",
+    ],
 };

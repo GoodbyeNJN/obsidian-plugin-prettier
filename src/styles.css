@@ -4,3 +4,13 @@
     height: 30em;
     margin-bottom: 0.75em;
 }
+
+.prettier-settings__textarea.valid:active,
+.prettier-settings__textarea.valid:focus {
+    box-shadow: 0 0 0 2px var(--background-modifier-success);
+}
+
+.prettier-settings__textarea.invalid:active,
+.prettier-settings__textarea.invalid:focus {
+    box-shadow: 0 0 0 2px var(--background-modifier-error);
+}

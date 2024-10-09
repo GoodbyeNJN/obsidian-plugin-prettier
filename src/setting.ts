@@ -1,8 +1,8 @@
-import { PluginSettingTab, Setting, TextAreaComponent } from "obsidian";
+import { ButtonComponent, PluginSettingTab, Setting, TextAreaComponent } from "obsidian";
 
 import { fmt } from "./i18n";
-import { getDefaultFormatOptions } from "./model";
-import { createElement, createFragment } from "./utils";
+import { getDefaultFormatOptions, getDefaultIgnorePatterns } from "./model";
+import { createElement, createFragment } from "./utils/ui";
 
 import type PrettierPlugin from "./main";
 import type { Settings } from "./model";
@@ -23,7 +23,6 @@ export class SettingsTab extends PluginSettingTab {
                 const result = Reflect.set(target, key, value, receiver);
                 if (result) {
                     plugin.saveData(target);
-                    this.display();
                 }
 
                 return result;
@@ -41,7 +40,7 @@ export class SettingsTab extends PluginSettingTab {
         this.addRemoveExtraSpaces(containerEl);
         this.addAddTrailingSpaces(containerEl);
         this.addFormatOptions(containerEl);
-        this.addResetButton(containerEl);
+        this.addIgnorePatterns(containerEl);
     }
 
     private addFormatOnSave(containerEl: HTMLElement) {
@@ -109,55 +108,75 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private addFormatOptions(containerEl: HTMLElement) {
-        const valid = createElement(
-            "span",
-            {
-                style: { color: "green" },
-            },
-            [fmt("setting:format-options-valid")],
-        );
-        const invalid = createElement(
-            "span",
-            {
-                style: { color: "red" },
-            },
-            [fmt("setting:format-options-invalid")],
-        );
-
-        const setting = new Setting(containerEl).setName("Format options").setDesc(
-            createFragment(
-                fmt("setting:format-options-description", 0),
-                createElement(
-                    "a",
-                    {
-                        href: "https://prettier.io/docs/en/configuration",
-                    },
-                    [fmt("setting:format-options-description", 1)],
+        const setting = new Setting(containerEl)
+            .setName(fmt("setting:format-options-name"))
+            .setDesc(
+                createFragment(
+                    fmt("setting:format-options-description", 0),
+                    createElement(
+                        "a",
+                        {
+                            href: "https://prettier.io/docs/en/configuration",
+                        },
+                        [fmt("setting:format-options-description", 1)],
+                    ),
+                    fmt("setting:format-options-description", 2),
                 ),
-                fmt("setting:format-options-description", 2),
-            ),
-        );
-        setting.controlEl.append(valid);
+            );
+
+        new ButtonComponent(setting.controlEl)
+            .setButtonText(fmt("setting:reset-button-name"))
+            .onClick(() => {
+                this.data.formatOptions = getDefaultFormatOptions();
+                this.display();
+            });
 
         new TextAreaComponent(containerEl).then(component => {
             component.inputEl.className = "prettier-settings__textarea";
 
             component.setValue(this.stringifyFormatOptions()).onChange(value => {
                 const isValid = this.parseFormatOptions(value);
-                setting.controlEl.replaceChildren(isValid ? valid : invalid);
+
+                if (isValid) {
+                    component.inputEl.classList.remove("invalid");
+                } else {
+                    component.inputEl.classList.add("invalid");
+                }
             });
         });
     }
 
-    private addResetButton(containerEl: HTMLElement) {
-        new Setting(containerEl)
-            .setName(fmt("setting:reset-options-name"))
-            .setDesc(fmt("setting:reset-options-description"))
-            .addButton(component =>
-                component.setButtonText(fmt("setting:reset-options-button")).onClick(() => {
-                    this.data.formatOptions = getDefaultFormatOptions();
-                }),
+    private addIgnorePatterns(containerEl: HTMLElement) {
+        const setting = new Setting(containerEl)
+            .setName(fmt("setting:ignore-patterns-name"))
+            .setDesc(
+                createFragment(
+                    fmt("setting:ignore-patterns-description", 0),
+                    createElement(
+                        "a",
+                        {
+                            href: "https://prettier.io/docs/en/ignore#ignoring-files-prettierignore",
+                        },
+                        [fmt("setting:ignore-patterns-description", 1)],
+                    ),
+                    fmt("setting:ignore-patterns-description", 2),
+                ),
             );
+
+        new ButtonComponent(setting.controlEl)
+            .setButtonText(fmt("setting:reset-button-name"))
+            .onClick(() => {
+                this.data.ignorePatterns = getDefaultIgnorePatterns();
+                this.display();
+            });
+
+        new TextAreaComponent(containerEl).then(component => {
+            component.inputEl.className = "prettier-settings__textarea";
+
+            component.setValue(this.data.ignorePatterns).onChange(value => {
+                this.data.ignorePatterns = value;
+            });
+        });
     }
 
     private stringifyFormatOptions() {
