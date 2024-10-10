@@ -32,6 +32,7 @@
         "eslint": "^9.11.1",
         "eslint-config-goodbyenjn": "^3.1.0",
         "fast-glob": "^3.3.2",
+        "jsx": "link:jsx",
         "obsidian": "1.7.2",
         "rollup": "^4.22.5",
         "rollup-plugin-esbuild": "^6.1.1",

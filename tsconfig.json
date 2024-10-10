@@ -5,7 +5,8 @@
         "moduleResolution": "Bundler",
         "lib": ["ESNext", "DOM", "DOM.Iterable"],
 
-        "jsx": "preserve",
+        "jsx": "react-jsx",
+        "jsxImportSource": "jsx",
         "isolatedModules": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,

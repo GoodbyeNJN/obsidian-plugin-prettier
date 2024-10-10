@@ -39,6 +39,9 @@ importers:
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.2
+      jsx:
+        specifier: link:jsx
+        version: link:jsx
       obsidian:
         specifier: 1.7.2
         version: 1.7.2(@codemirror/state@6.4.1)(@codemirror/view@6.34.1)

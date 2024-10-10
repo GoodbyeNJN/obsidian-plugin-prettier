@@ -1,0 +1,16 @@
+{
+    "name": "jsx",
+    "version": "0.0.0",
+    "exports": {
+        "./jsx-runtime": {
+            "require": "./index.js",
+            "import": "./index.js",
+            "types": "./types.d.ts"
+        },
+        "./jsx-dev-runtime": {
+            "require": "./index.js",
+            "import": "./index.js",
+            "types": "./types.d.ts"
+        }
+    }
+}

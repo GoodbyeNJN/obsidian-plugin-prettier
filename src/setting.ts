@@ -2,7 +2,6 @@ import { ButtonComponent, PluginSettingTab, Setting, TextAreaComponent } from "o
 
 import { fmt } from "./i18n";
 import { getDefaultFormatOptions, getDefaultIgnorePatterns } from "./model";
-import { createElement, createFragment } from "./utils/ui";
 
 import type PrettierPlugin from "./main";
 import type { Settings } from "./model";
@@ -68,27 +67,7 @@ export class SettingsTab extends PluginSettingTab {
     private addRemoveExtraSpaces(containerEl: HTMLElement) {
         new Setting(containerEl)
             .setName(fmt("setting:remove-extra-spaces-name"))
-            .setDesc(
-                createFragment(
-                    fmt("setting:remove-extra-spaces-description", 0),
-                    createElement(
-                        "a",
-                        {
-                            href: "https://github.com/prettier/prettier/issues/4114",
-                        },
-                        [fmt("setting:remove-extra-spaces-description", 1)],
-                    ),
-                    fmt("setting:remove-extra-spaces-description", 2),
-                    createElement(
-                        "a",
-                        {
-                            href: "https://github.com/prettier/prettier/issues/4281",
-                        },
-                        [fmt("setting:remove-extra-spaces-description", 3)],
-                    ),
-                    fmt("setting:remove-extra-spaces-description", 4),
-                ),
-            )
+            .setDesc(fmt("setting:remove-extra-spaces-description"))
             .addToggle(component =>
                 component.setValue(this.data.removeExtraSpaces).onChange(value => {
                     this.data.removeExtraSpaces = value;
@@ -110,19 +89,7 @@ export class SettingsTab extends PluginSettingTab {
     private addFormatOptions(containerEl: HTMLElement) {
         const setting = new Setting(containerEl)
             .setName(fmt("setting:format-options-name"))
-            .setDesc(
-                createFragment(
-                    fmt("setting:format-options-description", 0),
-                    createElement(
-                        "a",
-                        {
-                            href: "https://prettier.io/docs/en/configuration",
-                        },
-                        [fmt("setting:format-options-description", 1)],
-                    ),
-                    fmt("setting:format-options-description", 2),
-                ),
-            );
+            .setDesc(fmt("setting:format-options-description"));
 
         new ButtonComponent(setting.controlEl)
             .setButtonText(fmt("setting:reset-button-name"))
@@ -149,19 +116,7 @@ export class SettingsTab extends PluginSettingTab {
     private addIgnorePatterns(containerEl: HTMLElement) {
         const setting = new Setting(containerEl)
             .setName(fmt("setting:ignore-patterns-name"))
-            .setDesc(
-                createFragment(
-                    fmt("setting:ignore-patterns-description", 0),
-                    createElement(
-                        "a",
-                        {
-                            href: "https://prettier.io/docs/en/ignore#ignoring-files-prettierignore",
-                        },
-                        [fmt("setting:ignore-patterns-description", 1)],
-                    ),
-                    fmt("setting:ignore-patterns-description", 2),
-                ),
-            );
+            .setDesc(fmt("setting:ignore-patterns-description"));
 
         new ButtonComponent(setting.controlEl)
             .setButtonText(fmt("setting:reset-button-name"))

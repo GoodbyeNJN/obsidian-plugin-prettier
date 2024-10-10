@@ -71,7 +71,7 @@ export default defineConfig([
 
         external: ["obsidian", "electron"],
 
-        plugins: [pluginHotreload("main.js"), commonjs(), esbuild(), node()],
+        plugins: [pluginHotreload("main.js"), esbuild(), node(), commonjs()],
     },
 
     {

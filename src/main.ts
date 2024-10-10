@@ -107,9 +107,7 @@ export default class PrettierPlugin extends Plugin {
 
         const time = stop() / 1000;
         if (time > 5) {
-            const _notice = new Notice(
-                `${fmt("notice:format-too-slow", 0)}${time.toFixed(2)}${fmt("notice:format-too-slow", 1)}`,
-            );
+            const _notice = new Notice(fmt("notice:format-too-slow", { time: time.toFixed(2) }));
         }
     }
 }
