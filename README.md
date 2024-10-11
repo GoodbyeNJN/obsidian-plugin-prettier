@@ -12,6 +12,7 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
 -   Supports Markdown and MDX formats.
 -   Format the entire content or only the selected content.
 -   Automatically format the content when saving the file.
+-   Automatically format the last opened file when the file is closed or switched to another file.
 -   Format embedded code blocks. Currently supports js(x), ts(x), css, scss, less, html, json, and yaml.
 -   Optionally remove extra spaces in formatted list items. See related discussions [issues#4114](https://github.com/prettier/prettier/issues/4114) and [issues#4281](https://github.com/prettier/prettier/issues/4281).
 
@@ -111,6 +112,12 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
     Default: `false`
 
     Format the current content when saving the file.
+
+-   Format on file change
+
+    Default: `false`
+
+    Format the last opened file when the file is closed or switched to another file.
 
 -   Format code blocks
 
