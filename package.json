@@ -22,24 +22,24 @@
     "dependencies": {
         "ignore": "^6.0.2",
         "prettier": "^3.3.3",
-        "remeda": "^2.14.0"
+        "remeda": "^2.15.0"
     },
     "devDependencies": {
         "@rollup/plugin-commonjs": "^28.0.0",
         "@rollup/plugin-node-resolve": "^15.3.0",
-        "@types/node": "^22.7.4",
+        "@types/node": "^22.7.5",
         "dotenv": "^16.4.5",
-        "eslint": "^9.11.1",
+        "eslint": "^9.12.0",
         "eslint-config-goodbyenjn": "^3.1.0",
         "fast-glob": "^3.3.2",
         "jsx": "link:jsx",
         "obsidian": "1.7.2",
-        "rollup": "^4.22.5",
+        "rollup": "^4.24.0",
         "rollup-plugin-esbuild": "^6.1.1",
         "tslib": "^2.7.0",
-        "typescript": "^5.6.2",
+        "typescript": "^5.6.3",
         "vite-tsconfig-paths": "^5.0.1",
-        "vitest": "^2.1.1"
+        "vitest": "^2.1.2"
     },
     "obsidian": {
         "id": "prettier",
