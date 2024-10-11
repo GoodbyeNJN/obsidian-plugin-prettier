@@ -7,20 +7,23 @@ import { SettingsTab } from "./setting";
 import { timer } from "./utils/common";
 
 import type { Settings } from "./model";
-import type { Command } from "obsidian";
+import type { Command, EventRef, TFile } from "obsidian";
 
 export default class PrettierPlugin extends Plugin {
     settings: Settings = getDefaultSettings();
 
     private formatter!: Formatter;
+    private lastActiveFile: TFile | null = null;
+    private events: EventRef[] = [];
     private originalSaveCallback: Command["callback"];
 
     async onload() {
         this.settings = { ...this.settings, ...(await this.loadData()) };
         this.formatter = new Formatter(this);
 
-        this.registerCommand();
-        this.hookSaveCommand();
+        this.registerCommands();
+        this.registerEvents();
+        this.hookSaveCommands();
 
         this.registerMenu();
 
@@ -28,32 +31,74 @@ export default class PrettierPlugin extends Plugin {
     }
 
     onunload() {
-        this.unhookSaveCommand();
+        this.unregisterEvents();
+        this.unhookSaveCommands();
     }
 
-    private registerCommand() {
+    private registerCommands() {
         this.addCommand({
             id: "format-content",
             name: fmt("command:format-content-name"),
-            editorCallback: async editor => {
-                await this.withPerformanceNotice(() => this.formatter.formatContent(editor));
+            editorCallback: async (editor, view) => {
+                await this.withPerformanceNotice(() =>
+                    this.formatter.formatContent(editor, view.file),
+                );
             },
         });
 
         this.addCommand({
             id: "format-selection",
             name: fmt("command:format-selection-name"),
-            editorCheckCallback: (checking, editor) => {
-                // TODO Check if the callback support async
-                !checking &&
-                    this.withPerformanceNotice(() => this.formatter.formatSelection(editor));
+            editorCheckCallback: (checking, editor, view) => {
+                if (!checking) {
+                    this.withPerformanceNotice(() =>
+                        this.formatter.formatSelection(editor, view.file),
+                    );
+                }
 
                 return editor.somethingSelected();
             },
         });
     }
 
-    private hookSaveCommand() {
+    private registerEvents() {
+        this.lastActiveFile = this.app.workspace.getActiveFile();
+
+        this.events.push(
+            this.app.workspace.on("active-leaf-change", async () => {
+                const currentActiveFile = this.app.workspace.getActiveFile();
+
+                const isLastActiveFileExists = this.app.vault.getFileByPath(
+                    this.lastActiveFile?.path || "",
+                );
+                const isLastActiveMarkdownFile = ["md", "mdx"].includes(
+                    this.lastActiveFile?.extension || "",
+                );
+                const isLastAndCurrentSame = this.lastActiveFile?.path === currentActiveFile?.path;
+                if (
+                    !this.lastActiveFile ||
+                    !isLastActiveFileExists ||
+                    !isLastActiveMarkdownFile ||
+                    isLastAndCurrentSame
+                ) {
+                    this.lastActiveFile = currentActiveFile;
+
+                    return;
+                }
+
+                await this.formatter.formatOnFileChange(this.lastActiveFile);
+                this.lastActiveFile = currentActiveFile;
+            }),
+        );
+
+        this.events.map(event => this.registerEvent(event));
+    }
+
+    private unregisterEvents() {
+        this.events.map(event => this.app.workspace.offref(event));
+    }
+
+    private hookSaveCommands() {
         const saveCommand = this.app.commands.commands["editor:save-file"];
         const saveCallback = saveCommand?.callback;
         if (!saveCommand || !saveCallback) return;
@@ -61,14 +106,17 @@ export default class PrettierPlugin extends Plugin {
         this.originalSaveCallback = saveCallback;
         saveCommand.callback = async () => {
             const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-            view &&
-                (await this.withPerformanceNotice(() => this.formatter.formatOnSave(view.editor)));
+            if (view) {
+                await this.withPerformanceNotice(() =>
+                    this.formatter.formatOnSave(view.editor, view.file),
+                );
+            }
 
             await saveCallback();
         };
     }
 
-    private unhookSaveCommand() {
+    private unhookSaveCommands() {
         const saveCommand = this.app.commands.commands["editor:save-file"];
         if (!saveCommand || !this.originalSaveCallback) return;
 
@@ -77,13 +125,13 @@ export default class PrettierPlugin extends Plugin {
 
     private registerMenu() {
         this.registerEvent(
-            this.app.workspace.on("editor-menu", (menu, editor) => {
+            this.app.workspace.on("editor-menu", (menu, editor, view) => {
                 menu.addItem(item =>
                     item
                         .setTitle(fmt("command:format-content-name"))
                         .setIcon("paintbrush")
                         .onClick(async () => {
-                            await this.formatter.formatContent(editor);
+                            await this.formatter.formatContent(editor, view.file);
                         }),
                 );
 
@@ -93,7 +141,7 @@ export default class PrettierPlugin extends Plugin {
                             .setTitle(fmt("command:format-selection-name"))
                             .setIcon("paintbrush")
                             .onClick(async () => {
-                                await this.formatter.formatSelection(editor);
+                                await this.formatter.formatSelection(editor, view.file);
                             }),
                     );
             }),

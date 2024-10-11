@@ -6,6 +6,8 @@ export type LangKey =
     | "command:format-selection-name"
     | "setting:format-on-save-name"
     | "setting:format-on-save-description"
+    | "setting:format-on-file-change-name"
+    | "setting:format-on-file-change-description"
     | "setting:format-code-block-name"
     | "setting:format-code-block-description"
     | "setting:remove-extra-spaces-name"

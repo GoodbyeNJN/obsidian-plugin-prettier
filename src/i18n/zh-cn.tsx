@@ -13,6 +13,9 @@ export const ZH_CN = {
     "command:format-selection-name": "格式化选定内容",
     "setting:format-on-save-name": "保存时格式化",
     "setting:format-on-save-description": "保存文件时是否格式化当前内容。",
+    "setting:format-on-file-change-name": "文件更改时格式化",
+    "setting:format-on-file-change-description":
+        "当文件关闭或切换到其他文件时格式化最后打开的文件。",
     "setting:format-code-block-name": "格式化代码块",
     "setting:format-code-block-description":
         "格式化时是否包含代码块。目前支持 js(x), ts(x), css, scss, less, html, json 和 yaml。",

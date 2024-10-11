@@ -30,20 +30,19 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     display() {
-        const { containerEl } = this;
+        this.containerEl.empty();
 
-        containerEl.empty();
-
-        this.addFormatOnSave(containerEl);
-        this.addFormatCodeBlock(containerEl);
-        this.addRemoveExtraSpaces(containerEl);
-        this.addAddTrailingSpaces(containerEl);
-        this.addFormatOptions(containerEl);
-        this.addIgnorePatterns(containerEl);
+        this.addFormatOnSave();
+        this.addFormatOnFileChange();
+        this.addFormatCodeBlock();
+        this.addRemoveExtraSpaces();
+        this.addAddTrailingSpaces();
+        this.addFormatOptions();
+        this.addIgnorePatterns();
     }
 
-    private addFormatOnSave(containerEl: HTMLElement) {
-        new Setting(containerEl)
+    private addFormatOnSave() {
+        new Setting(this.containerEl)
             .setName(fmt("setting:format-on-save-name"))
             .setDesc(fmt("setting:format-on-save-description"))
             .addToggle(component =>
@@ -53,8 +52,19 @@ export class SettingsTab extends PluginSettingTab {
             );
     }
 
-    private addFormatCodeBlock(containerEl: HTMLElement) {
-        new Setting(containerEl)
+    private addFormatOnFileChange() {
+        new Setting(this.containerEl)
+            .setName(fmt("setting:format-on-file-change-name"))
+            .setDesc(fmt("setting:format-on-file-change-description"))
+            .addToggle(component =>
+                component.setValue(this.data.formatOnFileChange).onChange(value => {
+                    this.data.formatOnFileChange = value;
+                }),
+            );
+    }
+
+    private addFormatCodeBlock() {
+        new Setting(this.containerEl)
             .setName(fmt("setting:format-code-block-name"))
             .setDesc(fmt("setting:format-code-block-description"))
             .addToggle(component =>
@@ -64,8 +74,8 @@ export class SettingsTab extends PluginSettingTab {
             );
     }
 
-    private addRemoveExtraSpaces(containerEl: HTMLElement) {
-        new Setting(containerEl)
+    private addRemoveExtraSpaces() {
+        new Setting(this.containerEl)
             .setName(fmt("setting:remove-extra-spaces-name"))
             .setDesc(fmt("setting:remove-extra-spaces-description"))
             .addToggle(component =>
@@ -75,8 +85,8 @@ export class SettingsTab extends PluginSettingTab {
             );
     }
 
-    private addAddTrailingSpaces(containerEl: HTMLElement) {
-        new Setting(containerEl)
+    private addAddTrailingSpaces() {
+        new Setting(this.containerEl)
             .setName(fmt("setting:add-trailing-spaces-name"))
             .setDesc(fmt("setting:add-trailing-spaces-description"))
             .addToggle(component =>
@@ -86,8 +96,8 @@ export class SettingsTab extends PluginSettingTab {
             );
     }
 
-    private addFormatOptions(containerEl: HTMLElement) {
-        const setting = new Setting(containerEl)
+    private addFormatOptions() {
+        const setting = new Setting(this.containerEl)
             .setName(fmt("setting:format-options-name"))
             .setDesc(fmt("setting:format-options-description"));
 
@@ -98,7 +108,7 @@ export class SettingsTab extends PluginSettingTab {
                 this.display();
             });
 
-        new TextAreaComponent(containerEl).then(component => {
+        new TextAreaComponent(this.containerEl).then(component => {
             component.inputEl.className = "prettier-settings__textarea";
 
             component.setValue(this.stringifyFormatOptions()).onChange(value => {
@@ -113,8 +123,8 @@ export class SettingsTab extends PluginSettingTab {
         });
     }
 
-    private addIgnorePatterns(containerEl: HTMLElement) {
-        const setting = new Setting(containerEl)
+    private addIgnorePatterns() {
+        const setting = new Setting(this.containerEl)
             .setName(fmt("setting:ignore-patterns-name"))
             .setDesc(fmt("setting:ignore-patterns-description"));
 
@@ -125,7 +135,7 @@ export class SettingsTab extends PluginSettingTab {
                 this.display();
             });
 
-        new TextAreaComponent(containerEl).then(component => {
+        new TextAreaComponent(this.containerEl).then(component => {
             component.inputEl.className = "prettier-settings__textarea";
 
             component.setValue(this.data.ignorePatterns).onChange(value => {

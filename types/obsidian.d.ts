@@ -1,9 +1,9 @@
-import { App, Plugin } from "obsidian";
-
 declare module "obsidian" {
     export class Commands {
         commands: Record<string, Command>;
         editorCommands: Record<string, Command>;
+
+        executeCommandById: (id: string) => boolean;
     }
 
     interface App {
@@ -14,3 +14,15 @@ declare module "obsidian" {
         app: App;
     }
 }
+
+declare global {
+    interface Window {
+        CodeMirrorAdapter: {
+            commands: {
+                save: () => void;
+            };
+        };
+    }
+}
+
+export {};
