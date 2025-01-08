@@ -48,7 +48,7 @@ export class Formatter {
     async formatFile(file: TFile) {
         if (!this.shouldUsePrettier(file)) return;
 
-        const content = new MagicString(await file.vault.read(file));
+        const content = new MagicString(await this.app.vault.read(file));
         const options = this.getPrettierOptions(file);
 
         content.mutate(await prettier.format(content.original, options));
@@ -62,7 +62,7 @@ export class Formatter {
 
         if (!content.isModified) return;
 
-        await file.vault.modify(file, content.current);
+        await this.app.vault.modify(file, content.current);
     }
 
     async formatContent(editor: Editor, file: TFile | null) {

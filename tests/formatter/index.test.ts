@@ -11,8 +11,13 @@ import { MagicString } from "@/utils/string";
 import type PrettierPlugin from "@/main";
 import type { Settings } from "@/model";
 import type { App, Editor, FrontMatterCache, MetadataCache, TFile, Vault } from "obsidian";
+import type { Merge } from "type-fest";
+import type { Mock } from "vitest";
 
-const MockFile = vi.fn((filepath = "mock.md", io?: Pick<Vault, "read" | "modify">) => {
+type MockedObject<T> = Partial<{ [K in keyof T]: Mock }>;
+type File = Merge<TFile, { content: string }>;
+
+const MockFile = (filepath = "mock.md", content = "mock content") => {
     const { base, ext, name } = path.parse(filepath);
 
     return {
@@ -20,43 +25,46 @@ const MockFile = vi.fn((filepath = "mock.md", io?: Pick<Vault, "read" | "modify"
         path: filepath,
         extension: ext.slice(1),
         basename: name,
-        vault: (io || {
-            read: async _ => "mock content",
-            modify: async (..._) => {},
-        }) satisfies Partial<Vault> as Vault,
-    } satisfies Partial<TFile> as TFile;
-});
+        content,
+    } satisfies Partial<File> as File;
+};
 
-const MockEditor = vi.fn(
-    (init: Partial<Editor> = {}) =>
-        ({
-            getValue: vi.fn(() => "mock content"),
-            setValue: vi.fn(),
+const MockPlugin = (init?: {
+    frontmatter?: FrontMatterCache;
+    settings?: Partial<Settings>;
+    file?: File;
+}) => {
+    const { frontmatter, settings, file = MockFile() } = init || {};
 
-            getCursor: vi.fn(() => ({ line: 0, ch: 0 })),
-            setCursor: vi.fn(),
+    const metadataCache = {
+        getCache: vi.fn(() => ({ frontmatter })),
+    } satisfies MockedObject<MetadataCache> as unknown as MetadataCache;
+    const vault = {
+        read: vi.fn(() => file.content),
+        modify: vi.fn(),
+    } satisfies MockedObject<Vault> as unknown as Vault;
 
-            getSelection: vi.fn(() => "mock selection"),
-            replaceSelection: vi.fn(),
+    return {
+        settings: { ...getDefaultSettings(), ...settings },
+        app: { metadataCache, vault } satisfies Partial<App> as App,
+    } satisfies Partial<PrettierPlugin> as PrettierPlugin;
+};
 
-            getScrollInfo: vi.fn(() => ({ top: 0, left: 0 })),
-            scrollTo: vi.fn(),
+const MockEditor = {
+    getValue: vi.fn(() => "mock content"),
+    setValue: vi.fn(),
 
-            ...init,
-        }) satisfies Partial<Editor> as Editor,
-);
+    getCursor: vi.fn(() => ({ line: 0, ch: 0 })),
+    setCursor: vi.fn(),
 
-const MockPrettierPlugin = vi.fn(
-    (frontmatter: FrontMatterCache = {}, settings: Partial<Settings> = {}) =>
-        ({
-            settings: { ...getDefaultSettings(), ...settings },
-            app: {
-                metadataCache: {
-                    getCache: _ => ({ frontmatter }),
-                } satisfies Partial<MetadataCache> as MetadataCache,
-            } satisfies Partial<App> as App,
-        }) satisfies Partial<PrettierPlugin> as PrettierPlugin,
-);
+    getSelection: vi.fn(() => "mock selection"),
+    replaceSelection: vi.fn(),
+
+    getScrollInfo: vi.fn(() => ({ top: 0, left: 0 })),
+    scrollTo: vi.fn(),
+} satisfies MockedObject<Editor>;
+
+const editor = MockEditor as unknown as Editor;
 
 const CURSOR = "│";
 
@@ -65,32 +73,19 @@ const resolve = (...paths: string[]) => path.resolve(import.meta.dirname, ...pat
 const read = (filepath: string) => fs.promises.readFile(filepath, "utf-8");
 
 const prepare = (...filepaths: string[]) =>
-    filepaths
-        .flatMap(pattern => fg.sync(pattern))
-        .map(async filepath => {
-            const { base, name } = path.parse(filepath);
-            const content = new MagicString(await read(filepath));
+    Promise.all(
+        filepaths
+            .flatMap(pattern => fg.sync(pattern))
+            .map(async filepath => {
+                const { base, name } = path.parse(filepath);
+                const content = new MagicString(await read(filepath));
+                const [cursor] = content.find(CURSOR);
 
-            return { name, base, content };
-        });
+                content.replace(CURSOR, "");
 
-const removeCursor = (text: MagicString) => {
-    const offset = text.current.indexOf(CURSOR);
-
-    text.mutate(text.current.replaceAll(CURSOR, ""));
-
-    return offset;
-};
-
-const insertCursor = (text: MagicString, offset: number) => {
-    text.insert(offset, CURSOR);
-};
-
-const selectCursor = (text: MagicString) => {
-    const offset = removeCursor(text);
-
-    return [text.current.slice(0, offset), text.current.slice(offset)] as const;
-};
+                return { name, base, content, cursor };
+            }),
+    );
 
 describe.concurrent("Should format", () => {
     test.concurrent.for([
@@ -99,7 +94,9 @@ describe.concurrent("Should format", () => {
         { enable: false, expected: false },
     ])("Prettier: $enable", ({ enable, expected }, { expect }) => {
         const formatter = new Formatter(
-            MockPrettierPlugin(isDefined(enable) ? { prettier: enable } : enable),
+            MockPlugin({
+                frontmatter: isDefined(enable) ? { prettier: enable } : enable,
+            }),
         );
 
         expect(formatter.shouldUsePrettier(MockFile())).toEqual(expected);
@@ -110,7 +107,11 @@ describe.concurrent("Should format", () => {
         { ignorePatterns: "!config/*", expected: true },
         { ignorePatterns: "config/*", expected: false },
     ])("IgnorePatterns: $ignorePatterns", ({ ignorePatterns, expected }, { expect }) => {
-        const formatter = new Formatter(MockPrettierPlugin({}, { ignorePatterns }));
+        const formatter = new Formatter(
+            MockPlugin({
+                settings: { ignorePatterns },
+            }),
+        );
 
         expect(formatter.shouldUsePrettier(MockFile("config/test.md"))).toEqual(expected);
     });
@@ -136,18 +137,18 @@ describe.concurrent("Should format", () => {
             ignorePatterns: "!config/*",
             expected: false,
         },
-    ])(
-        "Prettier: $enable & IgnorePatterns: $ignorePatterns",
-        ({ enable, ignorePatterns, expected }, { expect }) => {
-            const formatter = new Formatter(
-                MockPrettierPlugin(isDefined(enable) ? { prettier: enable } : enable, {
-                    ignorePatterns,
-                }),
-            );
+    ])("Prettier: $enable & IgnorePatterns: $ignorePatterns", (x, { expect }) => {
+        const { enable, ignorePatterns, expected } = x;
 
-            expect(formatter.shouldUsePrettier(MockFile("config/test.md"))).toEqual(expected);
-        },
-    );
+        const formatter = new Formatter(
+            MockPlugin({
+                frontmatter: isDefined(enable) ? { prettier: enable } : enable,
+                settings: { ignorePatterns },
+            }),
+        );
+
+        expect(formatter.shouldUsePrettier(MockFile("config/test.md"))).toEqual(expected);
+    });
 });
 
 describe.concurrent("Should use fast mode", () => {
@@ -157,7 +158,9 @@ describe.concurrent("Should use fast mode", () => {
         { enable: false, expected: false },
     ])("FastMode: $enable", ({ enable, expected }, { expect }) => {
         const formatter = new Formatter(
-            MockPrettierPlugin(isDefined(enable) ? { "prettier-fast-mode": enable } : enable),
+            MockPlugin({
+                frontmatter: isDefined(enable) ? { "prettier-fast-mode": enable } : enable,
+            }),
         );
 
         expect(formatter.shouldUseFastMode(MockFile())).toEqual(expected);
@@ -169,10 +172,14 @@ describe.concurrent("Should format on save", () => {
         { formatOnSave: true, expected: 1 },
         { formatOnSave: false, expected: 0 },
     ])("FormatOnSave: $formatOnSave", ({ formatOnSave, expected }, { expect }) => {
-        const formatter = new Formatter(MockPrettierPlugin({}, { formatOnSave }));
+        const formatter = new Formatter(
+            MockPlugin({
+                settings: { formatOnSave },
+            }),
+        );
 
         formatter.formatContent = vi.fn();
-        formatter.formatOnSave(MockEditor(), MockFile());
+        formatter.formatOnSave(editor, MockFile());
         expect(formatter.formatContent).toBeCalledTimes(expected);
     });
 });
@@ -181,16 +188,19 @@ describe.concurrent("Should format on file change", () => {
     test.concurrent.for([
         { formatOnFileChange: true, expected: 1 },
         { formatOnFileChange: false, expected: 0 },
-    ])(
-        "FormatOnFileChange: $formatOnFileChange",
-        ({ formatOnFileChange, expected }, { expect }) => {
-            const formatter = new Formatter(MockPrettierPlugin({}, { formatOnFileChange }));
+    ])("FormatOnFileChange: $formatOnFileChange", (x, { expect }) => {
+        const { formatOnFileChange, expected } = x;
 
-            formatter.formatFile = vi.fn();
-            formatter.formatOnFileChange(MockFile());
-            expect(formatter.formatFile).toBeCalledTimes(expected);
-        },
-    );
+        const formatter = new Formatter(
+            MockPlugin({
+                settings: { formatOnFileChange },
+            }),
+        );
+
+        formatter.formatFile = vi.fn();
+        formatter.formatOnFileChange(MockFile());
+        expect(formatter.formatFile).toBeCalledTimes(expected);
+    });
 });
 
 describe.concurrent("Prettier options", () => {
@@ -216,7 +226,11 @@ describe.concurrent("Prettier options", () => {
             },
         },
     ])("Prettier option case: %#", ({ settings, expected }, { expect }) => {
-        const formatter = new Formatter(MockPrettierPlugin({}, settings));
+        const formatter = new Formatter(
+            MockPlugin({
+                settings,
+            }),
+        );
 
         expect(formatter.getPrettierOptions(MockFile())).toMatchObject(expected);
     });
@@ -227,11 +241,11 @@ describe.concurrent("Parser name", () => {
         { extension: "md", expected: "markdown" },
         { extension: "mdx", expected: "mdx" },
     ])("Extension: $extension", ({ extension, expected }, { expect }) => {
-        const formatter = new Formatter(MockPrettierPlugin());
+        const formatter = new Formatter(MockPlugin());
 
-        expect(formatter.getPrettierOptions(MockFile(`mock.${extension}`)).parser).toEqual(
-            expected,
-        );
+        const { parser } = formatter.getPrettierOptions(MockFile(`mock.${extension}`));
+
+        expect(parser).toEqual(expected);
     });
 });
 
@@ -241,13 +255,13 @@ test.concurrent("Assert fast mode is more quickly", async ({ expect }) => {
 
     const result = [];
     for (const enable of [true, false]) {
-        const setValue = vi.fn();
-        const editor = MockEditor({
-            getValue: () => content,
-            setValue,
-        });
+        vi.spyOn(editor, "getValue").mockReturnValue(content);
 
-        const formatter = new Formatter(MockPrettierPlugin({ "prettier-fast-mode": enable }));
+        const formatter = new Formatter(
+            MockPlugin({
+                frontmatter: { "prettier-fast-mode": enable },
+            }),
+        );
 
         const start = performance.now();
         await formatter.formatContent(editor, MockFile());
@@ -255,7 +269,7 @@ test.concurrent("Assert fast mode is more quickly", async ({ expect }) => {
         const end = performance.now();
 
         const time = end - start;
-        const output = setValue.mock.calls[0]?.[0] || content;
+        const output = MockEditor.setValue.mock.lastCall?.[0];
 
         result.push({ time, output });
     }
@@ -267,27 +281,25 @@ test.concurrent("Assert fast mode is more quickly", async ({ expect }) => {
 
 describe.concurrent("Format file", async () => {
     const cwd = resolve("./fixtures/md-and-mdx");
-    const files = await Promise.all(
-        prepare(...["md.md", "mdx.mdx"].map(filename => resolve(cwd, "input", filename))),
+    const files = await prepare(
+        ...["md.md", "mdx.mdx"].map(filename => resolve(cwd, "input", filename)),
     );
 
     test.concurrent.for(files)("Input file: $base", async ({ base, content }, { expect }) => {
-        const read = vi.fn(async _ => content.original);
-        const modify = vi.fn();
+        const file = MockFile(base, content.original);
+        const plugin = MockPlugin({
+            settings: {
+                addTrailingSpaces: true,
+                removeExtraSpaces: true,
+                formatCodeBlock: true,
+            },
+            file,
+        });
 
-        const formatter = new Formatter(
-            MockPrettierPlugin(
-                {},
-                {
-                    addTrailingSpaces: true,
-                    removeExtraSpaces: true,
-                    formatCodeBlock: true,
-                },
-            ),
-        );
+        const formatter = new Formatter(plugin);
 
-        await formatter.formatFile(MockFile(base, { read, modify }));
-        const output = modify.mock.calls[0]?.[1] || content.original;
+        await formatter.formatFile(file);
+        const output = (plugin.app.vault.modify as Mock).mock.lastCall?.[1];
 
         expect(output).toMatchFileSnapshot(resolve(cwd, "output", base));
     });
@@ -295,20 +307,19 @@ describe.concurrent("Format file", async () => {
 
 describe.concurrent("Remove extra spaces", async () => {
     const cwd = resolve("./fixtures/remove-extra-spaces");
-    const files = await Promise.all(
-        prepare(
-            ...["no-cursor.md", "cursor-*.md"].map(filename => resolve(cwd, "input", filename)),
-        ),
+    const files = await prepare(
+        ...["no-cursor.md", "cursor-*.md"].map(filename => resolve(cwd, "input", filename)),
     );
 
-    const formatter = new Formatter(MockPrettierPlugin());
+    const formatter = new Formatter(MockPlugin());
 
-    test.concurrent.for(files)("Input file: $name", async ({ base, name, content }, { expect }) => {
+    test.concurrent.for(files)("Input file: $name", async (x, { expect }) => {
+        const { base, name, content, cursor } = x;
+
         if (name.startsWith("no-cursor")) {
             formatter.removeExtraSpaces(content);
         } else {
-            const offset = formatter.removeExtraSpaces(content, removeCursor(content));
-            insertCursor(content, offset);
+            content.insert(formatter.removeExtraSpaces(content, cursor), CURSOR);
         }
 
         expect(content.current).toMatchFileSnapshot(resolve(cwd, "output", base));
@@ -317,20 +328,19 @@ describe.concurrent("Remove extra spaces", async () => {
 
 describe.concurrent("Add trailing spaces", async () => {
     const cwd = resolve("./fixtures/add-trailing-spaces");
-    const files = await Promise.all(
-        prepare(
-            ...["no-cursor.md", "cursor-*.md"].map(filename => resolve(cwd, "input", filename)),
-        ),
+    const files = await prepare(
+        ...["no-cursor.md", "cursor-*.md"].map(filename => resolve(cwd, "input", filename)),
     );
 
-    const formatter = new Formatter(MockPrettierPlugin());
+    const formatter = new Formatter(MockPlugin());
 
-    test.concurrent.for(files)("Input file: $name", async ({ base, name, content }, { expect }) => {
+    test.concurrent.for(files)("Input file: $name", async (x, { expect }) => {
+        const { base, name, content, cursor } = x;
+
         if (name.startsWith("no-cursor")) {
             formatter.addTrailingSpaces(content);
         } else {
-            const offset = formatter.addTrailingSpaces(content, removeCursor(content));
-            insertCursor(content, offset);
+            content.insert(formatter.addTrailingSpaces(content, cursor), CURSOR);
         }
 
         expect(content.current).toMatchFileSnapshot(resolve(cwd, "output", base));
@@ -342,26 +352,18 @@ describe.concurrent("Format content", () => {
 
     test.concurrent("With cursor", async ({ expect }) => {
         const subCwd = `${cwd}/cursor`;
-        const files = await Promise.all(prepare(`${subCwd}/input/cursor-*.md`));
+        const files = await prepare(`${subCwd}/input/cursor-*.md`);
 
-        for (const { base, content } of files) {
-            const cursor = content.offsetToPosition(removeCursor(content));
-            const setValue = vi.fn();
-            const setCursor = vi.fn();
+        for (const { base, content, cursor } of files) {
+            vi.spyOn(editor, "getValue").mockReturnValue(content.current);
+            vi.spyOn(editor, "getCursor").mockReturnValue(content.offsetToPosition(cursor));
 
-            const editor = MockEditor({
-                getValue: () => content.current,
-                setValue,
-
-                getCursor: () => cursor,
-                setCursor,
-            });
-            const formatter = new Formatter(MockPrettierPlugin());
+            const formatter = new Formatter(MockPlugin());
 
             await formatter.formatContent(editor, MockFile());
-            const formatted = new MagicString(setValue.mock.calls[0]?.[0] || content.current);
-            const position = setCursor.mock.calls[0]?.[0] || cursor;
-            insertCursor(formatted, formatted.positionToOffset(position));
+            const formatted = new MagicString(MockEditor.setValue.mock.lastCall?.[0]);
+            const position = MockEditor.setCursor.mock.lastCall?.[0];
+            formatted.insert(formatted.positionToOffset(position), CURSOR);
 
             expect(formatted.current).toMatchFileSnapshot(resolve(subCwd, "output", base));
         }
@@ -369,35 +371,26 @@ describe.concurrent("Format content", () => {
 
     test.concurrent("Modify spaces", async ({ expect }) => {
         const subCwd = `${cwd}/modify-spaces`;
-        const files = await Promise.all(prepare(`${subCwd}/input/cursor-*.md`));
+        const files = await prepare(`${subCwd}/input/cursor-*.md`);
 
-        for (const { base, content } of files) {
-            const cursor = content.offsetToPosition(removeCursor(content));
-            const setValue = vi.fn();
-            const setCursor = vi.fn();
+        for (const { base, content, cursor } of files) {
+            vi.spyOn(editor, "getValue").mockReturnValue(content.current);
+            vi.spyOn(editor, "getCursor").mockReturnValue(content.offsetToPosition(cursor));
 
-            const editor = MockEditor({
-                getValue: () => content.current,
-                setValue,
-
-                getCursor: () => cursor,
-                setCursor,
-            });
             const formatter = new Formatter(
-                MockPrettierPlugin(
-                    {},
-                    {
+                MockPlugin({
+                    settings: {
                         formatOptions: { tabWidth: 4 },
                         removeExtraSpaces: true,
                         addTrailingSpaces: true,
                     },
-                ),
+                }),
             );
 
             await formatter.formatContent(editor, MockFile());
-            const formatted = new MagicString(setValue.mock.calls[0]?.[0] || content.current);
-            const position = setCursor.mock.calls[0]?.[0] || cursor;
-            insertCursor(formatted, formatted.positionToOffset(position));
+            const formatted = new MagicString(MockEditor.setValue.mock.lastCall?.[0]);
+            const position = MockEditor.setCursor.mock.lastCall?.[0];
+            formatted.insert(formatted.positionToOffset(position), CURSOR);
 
             expect(formatted.current).toMatchFileSnapshot(resolve(subCwd, "output", base));
         }
@@ -409,21 +402,21 @@ describe.concurrent("Format selection", () => {
 
     test.concurrent("With line break", async ({ expect }) => {
         const subCwd = `${cwd}/line-break`;
-        const files = await Promise.all(prepare(`${subCwd}/input/cursor-*.md`));
+        const files = await prepare(`${subCwd}/input/cursor-*.md`);
 
-        for (const { base, content } of files) {
-            const [selection, rest] = selectCursor(content);
-            const replaceSelection = vi.fn();
+        for (const { base, content, cursor } of files) {
+            const selection = content.clone();
+            selection.slice(0, cursor);
 
-            const editor = MockEditor({
-                getSelection: () => selection,
-                replaceSelection,
-            });
-            const formatter = new Formatter(MockPrettierPlugin());
+            content.slice(cursor);
+
+            vi.spyOn(editor, "getSelection").mockReturnValue(selection.current);
+
+            const formatter = new Formatter(MockPlugin());
 
             await formatter.formatSelection(editor, MockFile());
-            const formatted = replaceSelection.mock.calls[0]?.[0] || selection;
-            const output = formatted + rest;
+            const formatted = MockEditor.replaceSelection.mock.lastCall?.[0];
+            const output = formatted + content.current;
 
             expect(output).toMatchFileSnapshot(resolve(subCwd, "output", base));
         }
@@ -431,30 +424,29 @@ describe.concurrent("Format selection", () => {
 
     test.concurrent("Modify spaces", async ({ expect }) => {
         const subCwd = `${cwd}/modify-spaces`;
-        const files = await Promise.all(prepare(`${subCwd}/input/cursor-*.md`));
+        const files = await prepare(`${subCwd}/input/cursor-*.md`);
 
-        for (const { base, content } of files) {
-            const [selection, rest] = selectCursor(content);
-            const replaceSelection = vi.fn();
+        for (const { base, content, cursor } of files) {
+            const selection = content.clone();
+            selection.slice(0, cursor);
 
-            const editor = MockEditor({
-                getSelection: () => selection,
-                replaceSelection,
-            });
+            content.slice(cursor);
+
+            vi.spyOn(editor, "getSelection").mockReturnValue(selection.current);
+
             const formatter = new Formatter(
-                MockPrettierPlugin(
-                    {},
-                    {
+                MockPlugin({
+                    settings: {
                         formatOptions: { tabWidth: 4 },
                         removeExtraSpaces: true,
                         addTrailingSpaces: true,
                     },
-                ),
+                }),
             );
 
             await formatter.formatSelection(editor, MockFile());
-            const formatted = replaceSelection.mock.calls[0]?.[0] || selection;
-            const output = formatted + rest;
+            const formatted = MockEditor.replaceSelection.mock.lastCall?.[0];
+            const output = formatted + content.current;
 
             expect(output).toMatchFileSnapshot(resolve(subCwd, "output", base));
         }
