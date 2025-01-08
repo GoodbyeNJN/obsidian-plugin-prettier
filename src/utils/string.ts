@@ -1,4 +1,5 @@
 import type { EditorPosition } from "obsidian";
+import type { ReadonlyTuple } from "type-fest";
 
 interface Matched {
     text: string;
@@ -22,6 +23,20 @@ export class MagicString {
 
     get isModified() {
         return this.original !== this.current;
+    }
+
+    clone() {
+        const clone = new MagicString(this.original);
+        clone.current = this.current;
+
+        return clone;
+    }
+
+    find(text: string, index?: number) {
+        const start = this.current.indexOf(text, index);
+        const end = start === -1 ? -1 : start + text.length;
+
+        return [start, end] as const;
     }
 
     insert(index: number, text: string, offset = -1) {
@@ -80,6 +95,37 @@ export class MagicString {
         );
     }
 
+    slice(start: number, end = Infinity, offset = -1) {
+        let from = this.normalizeIndex(start);
+        let to = this.normalizeIndex(end);
+        if (from > to) {
+            [from, to] = [to, from];
+        }
+
+        this.current = this.current.slice(from, to);
+
+        return this.calcOffset(
+            this.calcOffset(offset, {
+                action: "delete",
+                start: to,
+                end: Infinity,
+            }),
+            {
+                action: "delete",
+                start: 0,
+                end: from,
+            },
+        );
+    }
+
+    // eslint-disable-next-line max-params
+    replace(search: string, replace: string, index?: number, offset = -1) {
+        const [start, end] = this.find(search, index);
+        if (start === -1) return offset;
+
+        return this.update(start, end, replace, offset);
+    }
+
     append(text: string, offset = -1) {
         return this.insert(Infinity, text, offset);
     }
@@ -106,7 +152,7 @@ export class MagicString {
                         start: indices[0],
                         end: indices[1],
                         length: text.length,
-                    })) as Tuple<Length, Matched>,
+                    })) as ReadonlyTuple<Matched, Length>,
         );
     }
 

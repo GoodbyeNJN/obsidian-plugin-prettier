@@ -243,14 +243,78 @@ describe("Update Text", () => {
         { start: 5, end: 6, offset: 19, expected: 20 },
         { start: -5, end: -6, offset: 0, expected: 0 },
         { start: -5, end: -6, offset: 19, expected: 20 },
-    ])("Update with offset: $offset", ({ start, end, offset, expected }, { expect, skip }) => {
-        if (start !== 5) {
-            return skip();
-        }
-
+    ])("Update with offset: $offset", ({ start, end, offset, expected }, { expect }) => {
         const text = new MagicString(input);
 
         expect(text.update(start, end, multiple, offset)).toBe(expected);
+    });
+});
+
+describe("Slice Text", () => {
+    test.concurrent.for([
+        {
+            start: 3,
+            end: 6,
+            expected: `
+4 6
+`,
+        },
+        {
+            start: 8,
+            end: 11,
+            expected: `
+9
+1
+`,
+        },
+        {
+            start: -3,
+            end: -6,
+            expected: `
+4 6
+`,
+        },
+        {
+            start: -8,
+            end: -11,
+            expected: `
+9
+1
+`,
+        },
+        {
+            start: 3,
+            end: Infinity,
+            expected: `
+4 6789
+1234 6789
+`,
+        },
+        {
+            start: -6,
+            end: Infinity,
+            expected: `
+4 6789
+`,
+        },
+    ])("Slice range: ($start,$end)", ({ start, end, expected }, { expect }) => {
+        const text = new MagicString(input);
+        text.slice(start, end);
+
+        expect(text.current).toBe(expected.trim());
+    });
+
+    test.concurrent.for([
+        { start: 3, end: 6, offset: 0, expected: 0 },
+        { start: 3, end: 6, offset: 4, expected: 1 },
+        { start: 3, end: 6, offset: 19, expected: 3 },
+        { start: -3, end: -6, offset: 0, expected: 0 },
+        { start: -3, end: -6, offset: 15, expected: 2 },
+        { start: -3, end: -6, offset: 19, expected: 3 },
+    ])("Slice with offset: $offset", ({ start, end, offset, expected }, { expect }) => {
+        const text = new MagicString(input);
+
+        expect(text.slice(start, end, offset)).toBe(expected);
     });
 });
 
