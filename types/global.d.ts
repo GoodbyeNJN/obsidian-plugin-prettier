@@ -2,6 +2,11 @@ type SetRequired<BaseType, Keys extends keyof BaseType> = BaseType &
     Omit<BaseType, Keys> &
     Required<Pick<BaseType, Keys>>;
 
+interface MapWith<K, V, DefiniteKey extends K> extends Map<K, V> {
+    get: (k: DefiniteKey) => V;
+    get: (k: K) => V | undefined;
+}
+
 declare global {
     class ObjectConstructor {
         keys<T = {}>(o: T): (keyof T)[];
@@ -26,17 +31,6 @@ declare global {
             key: CheckedString,
         ): this is MapWith<K, V, CheckedString>;
     }
-
-    interface MapWith<K, V, DefiniteKey extends K> extends Map<K, V> {
-        get: (k: DefiniteKey) => V;
-        get: (k: K) => V | undefined;
-    }
-
-    type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
-
-    type Tuple<Length extends number, Type, T extends any[] = []> = T["length"] extends Length
-        ? T
-        : Tuple<Length, Type, [...T, Type]>;
 }
 
 export {};
