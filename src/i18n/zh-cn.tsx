@@ -30,7 +30,6 @@ export const ZH_CN = {
     "setting:add-trailing-spaces-name": "添加尾部空格",
     "setting:add-trailing-spaces-description":
         "是否在空列表项的末尾添加空格，以确保在实时阅览模式下正确渲染。",
-    "setting:reset-button-name": "重置",
     "setting:format-options-name": "格式化选项",
     "setting:format-options-description": (
         <>
@@ -49,4 +48,10 @@ export const ZH_CN = {
             。
         </>
     ),
+    "setting:language-mappings-name": "代码块语言映射",
+    "setting:language-mappings-description":
+        "将代码块语言从一种映射到另一种。例如，设置 `dataviewjs → js` 的映射后，Prettier 将对所有 `dataviewjs` 代码块使用 `js` 语言格式化。",
+    "setting:reset-button-name": "重置",
+    "setting:add-button-name": "添加",
+    "setting:delete-button-name": "删除",
 } satisfies Lang;

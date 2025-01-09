@@ -1,4 +1,11 @@
-import { ButtonComponent, PluginSettingTab, Setting, TextAreaComponent } from "obsidian";
+import {
+    ButtonComponent,
+    PluginSettingTab,
+    Setting,
+    TextAreaComponent,
+    TextComponent,
+} from "obsidian";
+import { omit } from "remeda";
 
 import { fmt } from "./i18n";
 import { getDefaultFormatOptions, getDefaultIgnorePatterns } from "./model";
@@ -37,111 +44,214 @@ export class SettingsTab extends PluginSettingTab {
         this.addFormatCodeBlock();
         this.addRemoveExtraSpaces();
         this.addAddTrailingSpaces();
+        this.addLanguageMappings();
         this.addFormatOptions();
         this.addIgnorePatterns();
     }
 
     private addFormatOnSave() {
-        new Setting(this.containerEl)
-            .setName(fmt("setting:format-on-save-name"))
-            .setDesc(fmt("setting:format-on-save-description"))
-            .addToggle(component =>
-                component.setValue(this.data.formatOnSave).onChange(value => {
-                    this.data.formatOnSave = value;
-                }),
-            );
+        this.addToggleSetting(
+            fmt("setting:format-on-save-name"),
+            fmt("setting:format-on-save-description"),
+            "formatOnSave",
+        );
     }
 
     private addFormatOnFileChange() {
-        new Setting(this.containerEl)
-            .setName(fmt("setting:format-on-file-change-name"))
-            .setDesc(fmt("setting:format-on-file-change-description"))
-            .addToggle(component =>
-                component.setValue(this.data.formatOnFileChange).onChange(value => {
-                    this.data.formatOnFileChange = value;
-                }),
-            );
+        this.addToggleSetting(
+            fmt("setting:format-on-file-change-name"),
+            fmt("setting:format-on-file-change-description"),
+            "formatOnFileChange",
+        );
     }
 
     private addFormatCodeBlock() {
-        new Setting(this.containerEl)
-            .setName(fmt("setting:format-code-block-name"))
-            .setDesc(fmt("setting:format-code-block-description"))
-            .addToggle(component =>
-                component.setValue(this.data.formatCodeBlock).onChange(value => {
-                    this.data.formatCodeBlock = value;
-                }),
-            );
+        this.addToggleSetting(
+            fmt("setting:format-code-block-name"),
+            fmt("setting:format-code-block-description"),
+            "formatCodeBlock",
+        );
     }
 
     private addRemoveExtraSpaces() {
-        new Setting(this.containerEl)
-            .setName(fmt("setting:remove-extra-spaces-name"))
-            .setDesc(fmt("setting:remove-extra-spaces-description"))
-            .addToggle(component =>
-                component.setValue(this.data.removeExtraSpaces).onChange(value => {
-                    this.data.removeExtraSpaces = value;
-                }),
-            );
+        this.addToggleSetting(
+            fmt("setting:remove-extra-spaces-name"),
+            fmt("setting:remove-extra-spaces-description"),
+            "removeExtraSpaces",
+        );
     }
 
     private addAddTrailingSpaces() {
+        this.addToggleSetting(
+            fmt("setting:add-trailing-spaces-name"),
+            fmt("setting:add-trailing-spaces-description"),
+            "addTrailingSpaces",
+        );
+    }
+
+    private addLanguageMappings() {
+        const addTextInput = (containerEl: HTMLElement) => {
+            const input = new TextComponent(containerEl);
+
+            const setValid = (isValid: boolean) => {
+                if (isValid) {
+                    input.inputEl.classList.remove("invalid");
+                } else {
+                    input.inputEl.classList.add("invalid");
+                }
+
+                return input;
+            };
+
+            input.inputEl.className = "prettier-settings__mapping-text";
+            input.onChange(value => {
+                setValid(value.length !== 0);
+            });
+
+            return Object.assign(input, { setValid });
+        };
+
+        const addMapping = (containerEl: HTMLElement) => {
+            const container = containerEl.createDiv("prettier-settings__mapping");
+
+            const from = addTextInput(container);
+            container.createSpan({ text: "→", cls: "prettier-settings__mapping-symbol" });
+            const to = addTextInput(container);
+
+            const button = new ButtonComponent(container).setClass(
+                "prettier-settings__mapping-button",
+            );
+
+            return { container, from, to, button };
+        };
+
         new Setting(this.containerEl)
-            .setName(fmt("setting:add-trailing-spaces-name"))
-            .setDesc(fmt("setting:add-trailing-spaces-description"))
+            .setName(fmt("setting:language-mappings-name"))
+            .setDesc(fmt("setting:language-mappings-description"));
+
+        const extra = this.containerEl.createDiv("setting-item-extra");
+
+        const { container, from, to, button } = addMapping(extra);
+        container.addClass("prettier-settings__mapping-header");
+        button.setButtonText(fmt("setting:add-button-name")).onClick(() => {
+            const fromValue = from.getValue();
+            const toValue = to.getValue();
+            if (fromValue.length === 0 || toValue.length === 0) {
+                if (fromValue.length === 0) {
+                    from.setValid(false);
+                }
+                if (toValue.length === 0) {
+                    to.setValid(false);
+                }
+            } else {
+                from.setValid(true);
+                to.setValid(true);
+                this.data.languageMappings = {
+                    ...this.data.languageMappings,
+                    [fromValue]: toValue,
+                };
+                this.display();
+            }
+        });
+
+        for (const [k, v] of Object.entries(this.data.languageMappings)) {
+            const { from, to, button } = addMapping(extra);
+
+            from.setValue(k).setDisabled(true);
+            to.setValue(v).setDisabled(true);
+            button.setButtonText(fmt("setting:delete-button-name")).onClick(() => {
+                this.data.languageMappings = omit(this.data.languageMappings, [k]);
+                this.display();
+            });
+        }
+    }
+
+    private addFormatOptions() {
+        this.addResetSetting(
+            fmt("setting:format-options-name"),
+            fmt("setting:format-options-description"),
+            () => {
+                this.data.formatOptions = getDefaultFormatOptions();
+            },
+        );
+
+        this.addTextArea()
+            .setValue(this.stringifyFormatOptions())
+            .setValidator(value => this.parseFormatOptions(value));
+    }
+
+    private addIgnorePatterns() {
+        this.addResetSetting(
+            fmt("setting:ignore-patterns-name"),
+            fmt("setting:ignore-patterns-description"),
+            () => {
+                this.data.ignorePatterns = getDefaultIgnorePatterns();
+            },
+        );
+
+        this.addTextArea()
+            .setValue(this.data.ignorePatterns)
+            .onChange(value => {
+                this.data.ignorePatterns = value;
+            });
+    }
+
+    private addToggleSetting(
+        name: string | DocumentFragment,
+        description: string | DocumentFragment,
+        key: { [K in keyof Settings]: Settings[K] extends boolean ? K : never }[keyof Settings],
+    ) {
+        return new Setting(this.containerEl)
+            .setName(name)
+            .setDesc(description)
             .addToggle(component =>
-                component.setValue(this.data.addTrailingSpaces).onChange(value => {
-                    this.data.addTrailingSpaces = value;
+                component.setValue(this.data[key]).onChange(value => {
+                    this.data[key] = value;
                 }),
             );
     }
 
-    private addFormatOptions() {
-        const setting = new Setting(this.containerEl)
-            .setName(fmt("setting:format-options-name"))
-            .setDesc(fmt("setting:format-options-description"));
-
-        new ButtonComponent(setting.controlEl)
-            .setButtonText(fmt("setting:reset-button-name"))
-            .onClick(() => {
-                this.data.formatOptions = getDefaultFormatOptions();
-                this.display();
+    private addResetSetting(
+        name: string | DocumentFragment,
+        description: string | DocumentFragment,
+        handler: () => void,
+    ) {
+        return new Setting(this.containerEl)
+            .setName(name)
+            .setDesc(description)
+            .addButton(component => {
+                component.setButtonText(fmt("setting:reset-button-name")).onClick(() => {
+                    handler();
+                    this.display();
+                });
             });
-
-        new TextAreaComponent(this.containerEl).then(component => {
-            component.inputEl.className = "prettier-settings__textarea";
-
-            component.setValue(this.stringifyFormatOptions()).onChange(value => {
-                const isValid = this.parseFormatOptions(value);
-
-                if (isValid) {
-                    component.inputEl.classList.remove("invalid");
-                } else {
-                    component.inputEl.classList.add("invalid");
-                }
-            });
-        });
     }
 
-    private addIgnorePatterns() {
-        const setting = new Setting(this.containerEl)
-            .setName(fmt("setting:ignore-patterns-name"))
-            .setDesc(fmt("setting:ignore-patterns-description"));
+    private addTextArea() {
+        const textArea = new TextAreaComponent(this.containerEl.createDiv("setting-item-extra"));
 
-        new ButtonComponent(setting.controlEl)
-            .setButtonText(fmt("setting:reset-button-name"))
-            .onClick(() => {
-                this.data.ignorePatterns = getDefaultIgnorePatterns();
-                this.display();
-            });
+        let fn: (value: string) => boolean;
+        const setValidator = (validator: typeof fn) => {
+            fn = validator;
+            return textArea;
+        };
 
-        new TextAreaComponent(this.containerEl).then(component => {
-            component.inputEl.className = "prettier-settings__textarea";
+        const setValid = (isValid: boolean) => {
+            if (isValid) {
+                textArea.inputEl.classList.remove("invalid");
+            } else {
+                textArea.inputEl.classList.add("invalid");
+            }
 
-            component.setValue(this.data.ignorePatterns).onChange(value => {
-                this.data.ignorePatterns = value;
-            });
+            return textArea;
+        };
+
+        textArea.inputEl.className = "prettier-settings__textarea";
+        textArea.onChange(value => {
+            setValid(fn?.(value) ?? true);
         });
+
+        return Object.assign(textArea, { setValidator, setValid });
     }
 
     private stringifyFormatOptions() {

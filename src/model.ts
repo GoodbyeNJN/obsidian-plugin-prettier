@@ -6,6 +6,7 @@ export interface Settings {
     formatCodeBlock: boolean;
     removeExtraSpaces: boolean;
     addTrailingSpaces: boolean;
+    languageMappings: Record<string, string>;
     formatOptions: Options;
     ignorePatterns: string;
 }
@@ -31,6 +32,7 @@ export const getDefaultSettings = (): Settings => ({
     formatCodeBlock: false,
     removeExtraSpaces: false,
     addTrailingSpaces: false,
+    languageMappings: {},
     formatOptions: getDefaultFormatOptions(),
     ignorePatterns: getDefaultIgnorePatterns(),
 });

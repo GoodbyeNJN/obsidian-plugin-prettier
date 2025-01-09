@@ -156,18 +156,21 @@ export class Formatter {
             extensions.includes(`.${file.extension}`),
         );
         const parser = language?.name === "MDX" ? "mdx" : "markdown";
+        const plugins = [
+            pluginBabel,
+            pluginEstree,
+            pluginHtml,
+            pluginMarkdown,
+            pluginPostcss,
+            pluginTypescript,
+            pluginYaml,
+        ];
+        const __languageMappings = new Map(Object.entries(this.settings.languageMappings));
 
         return {
             parser,
-            plugins: [
-                pluginBabel,
-                pluginEstree,
-                pluginHtml,
-                pluginMarkdown,
-                pluginPostcss,
-                pluginTypescript,
-                pluginYaml,
-            ],
+            plugins,
+            __languageMappings,
             ...this.settings.formatOptions,
             embeddedLanguageFormatting: this.settings.formatCodeBlock ? "auto" : "off",
         };

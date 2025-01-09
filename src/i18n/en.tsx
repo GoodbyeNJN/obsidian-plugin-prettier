@@ -32,7 +32,6 @@ export const EN = {
     "setting:add-trailing-spaces-name": "Add trailing spaces",
     "setting:add-trailing-spaces-description":
         "Add spaces at the end of empty list items to ensure correct rendering in live preview mode.",
-    "setting:reset-button-name": "Reset",
     "setting:format-options-name": "Format options",
     "setting:format-options-description": (
         <>
@@ -52,4 +51,10 @@ export const EN = {
             for more details.
         </>
     ),
+    "setting:language-mappings-name": "Code block language mappings",
+    "setting:language-mappings-description":
+        "Map code block languages from one to another. For example, after setting the mapping `dataviewjs → js`, Prettier will format all `dataviewjs` code blocks as `js` language.",
+    "setting:reset-button-name": "Reset",
+    "setting:add-button-name": "Add",
+    "setting:delete-button-name": "Delete",
 } satisfies Lang;

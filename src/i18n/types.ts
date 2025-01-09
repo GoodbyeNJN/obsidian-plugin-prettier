@@ -14,11 +14,15 @@ export type LangKey =
     | "setting:remove-extra-spaces-description"
     | "setting:add-trailing-spaces-name"
     | "setting:add-trailing-spaces-description"
-    | "setting:reset-button-name"
     | "setting:format-options-name"
     | "setting:format-options-description"
     | "setting:ignore-patterns-name"
-    | "setting:ignore-patterns-description";
+    | "setting:ignore-patterns-description"
+    | "setting:language-mappings-name"
+    | "setting:language-mappings-description"
+    | "setting:add-button-name"
+    | "setting:delete-button-name"
+    | "setting:reset-button-name";
 
 export type LangValue =
     | string

@@ -1,16 +1,62 @@
+.setting-item-extra {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding-bottom: 0.75em;
+}
+
+.prettier-settings__mapping,
+.prettier-settings__mapping-header {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 0.75em;
+    margin: 0 0.75em;
+}
+
+.prettier-settings__mapping-header {
+    padding-bottom: 0.75em;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.prettier-settings__mapping-header:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.prettier-settings__mapping-text {
+    flex: 1 1 16em;
+    min-width: 0;
+}
+
+.prettier-settings__mapping-symbol {
+    flex: 1 0 2em;
+    display: inline-flex;
+    justify-content: center;
+}
+
+.prettier-settings__mapping-button {
+    margin-left: 1.5em;
+}
+
 .prettier-settings__textarea {
     display: block;
-    width: 100%;
-    height: 30em;
-    margin-bottom: 0.75em;
+    height: 16em;
 }
 
 .prettier-settings__textarea.valid:active,
-.prettier-settings__textarea.valid:focus {
+.prettier-settings__textarea.valid:focus,
+.prettier-settings__mapping-text.valid,
+.prettier-settings__mapping-text.valid:active,
+.prettier-settings__mapping-text.valid:focus {
     box-shadow: 0 0 0 2px var(--background-modifier-success);
 }
 
 .prettier-settings__textarea.invalid:active,
-.prettier-settings__textarea.invalid:focus {
+.prettier-settings__textarea.invalid:focus,
+.prettier-settings__mapping-text.invalid,
+.prettier-settings__mapping-text.invalid:active,
+.prettier-settings__mapping-text.invalid:focus {
     box-shadow: 0 0 0 2px var(--background-modifier-error);
 }
