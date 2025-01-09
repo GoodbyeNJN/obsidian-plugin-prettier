@@ -318,6 +318,88 @@ describe("Slice Text", () => {
     });
 });
 
+describe("Replace Text", () => {
+    test.concurrent.for([
+        {
+            search: "4 6",
+            replace: "4x6",
+            expected: `
+1234x6789
+1234 6789
+`,
+        },
+        {
+            search: "9\n1",
+            replace: "9x1",
+            expected: `
+1234 6789x1234 6789
+`,
+        },
+    ])("Replace text: $search", ({ search, replace, expected }, { expect }) => {
+        const text = new MagicString(input);
+        text.replace(search, replace);
+
+        expect(text.current).toBe(expected.trim());
+    });
+
+    test.concurrent.for([
+        {
+            search: "4 6",
+            replace: "4x6",
+            index: 0,
+            expected: `
+1234x6789
+1234 6789
+`,
+        },
+        {
+            search: "4 6",
+            replace: "4x6",
+            index: 10,
+            expected: `
+1234 6789
+1234x6789
+`,
+        },
+    ])("Replace text after index: $index", ({ search, replace, index, expected }, { expect }) => {
+        const text = new MagicString(input);
+        text.replace(search, replace, index);
+
+        expect(text.current).toBe(expected.trim());
+    });
+
+    test.concurrent.for([
+        {
+            search: "4 6",
+            replace: "4xx6",
+            offset: 0,
+            expected: 0,
+        },
+        {
+            search: "4 6",
+            replace: "4xx6",
+            offset: 19,
+            expected: 20,
+        },
+        {
+            search: "9\n1",
+            replace: "9xx1",
+            offset: 0,
+            expected: 0,
+        },
+        {
+            search: "9\n1",
+            replace: "9xx1",
+            offset: 19,
+            expected: 20,
+        },
+    ])("Replace text with offset: $offset", ({ search, replace, offset, expected }, { expect }) => {
+        const text = new MagicString(input);
+
+        expect(text.replace(search, replace, 0, offset)).toBe(expected);
+    });
+});
+
 describe("Transform position to offset", () => {
     test.concurrent.for([
         { line: 0, ch: 4, expected: 4 },
