@@ -301,7 +301,7 @@ describe.concurrent("Format file", async () => {
         await formatter.formatFile(file);
         const output = (plugin.app.vault.modify as Mock).mock.lastCall?.[1];
 
-        expect(output).toMatchFileSnapshot(resolve(cwd, "output", base));
+        await expect(output).toMatchFileSnapshot(resolve(cwd, "output", base));
     });
 });
 
@@ -322,7 +322,7 @@ describe.concurrent("Remove extra spaces", async () => {
             content.insert(formatter.removeExtraSpaces(content, cursor), CURSOR);
         }
 
-        expect(content.current).toMatchFileSnapshot(resolve(cwd, "output", base));
+        await expect(content.current).toMatchFileSnapshot(resolve(cwd, "output", base));
     });
 });
 
@@ -343,7 +343,7 @@ describe.concurrent("Add trailing spaces", async () => {
             content.insert(formatter.addTrailingSpaces(content, cursor), CURSOR);
         }
 
-        expect(content.current).toMatchFileSnapshot(resolve(cwd, "output", base));
+        await expect(content.current).toMatchFileSnapshot(resolve(cwd, "output", base));
     });
 });
 
@@ -365,7 +365,7 @@ describe.concurrent("Format content", () => {
             const position = MockEditor.setCursor.mock.lastCall?.[0];
             formatted.insert(formatted.positionToOffset(position), CURSOR);
 
-            expect(formatted.current).toMatchFileSnapshot(resolve(subCwd, "output", base));
+            await expect(formatted.current).toMatchFileSnapshot(resolve(subCwd, "output", base));
         }
     });
 
@@ -392,7 +392,7 @@ describe.concurrent("Format content", () => {
             const position = MockEditor.setCursor.mock.lastCall?.[0];
             formatted.insert(formatted.positionToOffset(position), CURSOR);
 
-            expect(formatted.current).toMatchFileSnapshot(resolve(subCwd, "output", base));
+            await expect(formatted.current).toMatchFileSnapshot(resolve(subCwd, "output", base));
         }
     });
 });
@@ -418,7 +418,7 @@ describe.concurrent("Format selection", () => {
             const formatted = MockEditor.replaceSelection.mock.lastCall?.[0];
             const output = formatted + content.current;
 
-            expect(output).toMatchFileSnapshot(resolve(subCwd, "output", base));
+            await expect(output).toMatchFileSnapshot(resolve(subCwd, "output", base));
         }
     });
 
@@ -448,7 +448,7 @@ describe.concurrent("Format selection", () => {
             const formatted = MockEditor.replaceSelection.mock.lastCall?.[0];
             const output = formatted + content.current;
 
-            expect(output).toMatchFileSnapshot(resolve(subCwd, "output", base));
+            await expect(output).toMatchFileSnapshot(resolve(subCwd, "output", base));
         }
     });
 });
