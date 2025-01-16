@@ -1,7 +1,7 @@
 ## Format unordered list
 
--   list item 1
--   list item 2
+- list item 1
+- list item 2
 
 ## Format ordered list
 
