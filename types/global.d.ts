@@ -31,6 +31,17 @@ declare global {
             key: CheckedString,
         ): this is MapWith<K, V, CheckedString>;
     }
+
+    interface Manifest {
+        id: string;
+        name: string;
+        version: string;
+        author: string;
+        authorUrl: string;
+        description: string;
+        isDesktopOnly: boolean;
+        minAppVersion: string;
+    }
 }
 
 export {};

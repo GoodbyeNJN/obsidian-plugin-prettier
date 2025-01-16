@@ -28,7 +28,7 @@ export class SettingsTab extends PluginSettingTab {
             set: (target, key, value, receiver) => {
                 const result = Reflect.set(target, key, value, receiver);
                 if (result) {
-                    plugin.saveData(target);
+                    plugin.saveSettings();
                 }
 
                 return result;

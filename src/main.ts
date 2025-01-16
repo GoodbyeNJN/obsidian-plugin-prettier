@@ -2,23 +2,25 @@ import { MarkdownView, Notice, Plugin } from "obsidian";
 
 import { Formatter } from "./formatter";
 import { fmt } from "./i18n";
-import { getDefaultSettings } from "./model";
+import { getCurrentVersion, getDefaultSettings, migrate } from "./model";
 import { SettingsTab } from "./setting";
 import { timer } from "./utils/common";
 
-import type { Settings } from "./model";
+import type { Data } from "./model";
 import type { Command, EventRef, TFile } from "obsidian";
 
 export default class PrettierPlugin extends Plugin {
-    settings: Settings = getDefaultSettings();
+    settings = getDefaultSettings();
 
+    private version = getCurrentVersion();
     private formatter!: Formatter;
     private lastActiveFile: TFile | null = null;
     private events: EventRef[] = [];
     private originalSaveCallback: Command["callback"];
 
     async onload() {
-        this.settings = { ...this.settings, ...(await this.loadData()) };
+        await this.loadSettings();
+
         this.formatter = new Formatter(this);
 
         this.registerCommands();
@@ -33,6 +35,22 @@ export default class PrettierPlugin extends Plugin {
     onunload() {
         this.unregisterEvents();
         this.unhookSaveCommands();
+    }
+
+    async loadSettings() {
+        const data = await this.loadData();
+        const { settings } = migrate(data);
+
+        this.settings = settings;
+    }
+
+    async saveSettings() {
+        const data: Data = {
+            version: this.version,
+            settings: this.settings,
+        };
+
+        await this.saveData(data);
     }
 
     private registerCommands() {

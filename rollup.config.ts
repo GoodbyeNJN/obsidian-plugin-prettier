@@ -2,28 +2,18 @@ import path from "node:path";
 
 import commonjs from "@rollup/plugin-commonjs";
 import node from "@rollup/plugin-node-resolve";
+import replace from "@rollup/plugin-replace";
 import { isArray, isPlainObject } from "remeda";
 import { defineConfig } from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 
-import { readFile, readJson } from "./src/utils/fs";
+import { readFile, readJsonSync } from "./src/utils/fs";
 
 import type PackageJson from "./package.json";
 import type { Plugin, RollupOptions } from "rollup";
 
 // eslint-disable-next-line import/order
 import "dotenv/config";
-
-interface Manifest {
-    id: string;
-    name: string;
-    version: string;
-    author: string;
-    authorUrl: string;
-    description: string;
-    isDesktopOnly: boolean;
-    minAppVersion: string;
-}
 
 const isWatchMode = process.env.ROLLUP_WATCH === "true";
 const isHotreloadEnabled = isWatchMode && Boolean(process.env.OBSIDIAN_PLUGINS_DIR);
@@ -40,13 +30,31 @@ const strip = (code: string) => {
     return code.slice(start, end);
 };
 
+const genManifest = () => {
+    const packageJson = readJsonSync<typeof PackageJson>("./package.json");
+
+    const { version, description, author, obsidian } = packageJson;
+    const { id, name, isDesktopOnly, minAppVersion } = obsidian;
+    const manifest: Manifest = {
+        id: isHotreloadEnabled ? `${id}-dev` : id,
+        name: isHotreloadEnabled ? `${name} (Dev)` : name,
+        version,
+        author: author.name,
+        authorUrl: author.url,
+        description,
+        isDesktopOnly,
+        minAppVersion,
+    };
+
+    return manifest;
+};
+
 const pluginHotreload = (file: string): Plugin => ({
     name: "plugin:hotreload",
     async options(options: RollupOptions) {
         if (!isHotreloadEnabled) return null;
 
-        const { obsidian } = await readJson<typeof PackageJson>("./package.json");
-        const id = `${obsidian.id}-dev`;
+        const { id } = genManifest();
 
         if (isPlainObject(options.output)) {
             options.output = [options.output];
@@ -71,7 +79,16 @@ export default defineConfig([
 
         external: ["obsidian", "electron"],
 
-        plugins: [pluginHotreload("main.js"), esbuild(), node(), commonjs()],
+        plugins: [
+            pluginHotreload("main.js"),
+            replace({
+                "process.env.MANIFEST": JSON.stringify(genManifest()),
+                preventAssignment: true,
+            }),
+            esbuild(),
+            node(),
+            commonjs(),
+        ],
     },
 
     {
@@ -109,21 +126,8 @@ export default defineConfig([
             pluginHotreload("manifest.json"),
             {
                 name: "plugin:manifest",
-                async load(path) {
-                    const packageJson = await readJson<typeof PackageJson>(path);
-
-                    const { version, description, author, obsidian } = packageJson;
-                    const { id, name, isDesktopOnly, minAppVersion } = obsidian;
-                    const manifest: Manifest = {
-                        id: isHotreloadEnabled ? `${id}-dev` : id,
-                        name: isHotreloadEnabled ? `${name} (Dev)` : name,
-                        version,
-                        author: author.name,
-                        authorUrl: author.url,
-                        description,
-                        isDesktopOnly,
-                        minAppVersion,
-                    };
+                load() {
+                    const manifest = genManifest();
 
                     return wrap(JSON.stringify(manifest, null, 4));
                 },
