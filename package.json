@@ -21,7 +21,7 @@
     "license": "MIT",
     "dependencies": {
         "ignore": "^6.0.2",
-        "prettier": "^3.3.3",
+        "prettier": "^3.4.2",
         "remeda": "^2.15.0"
     },
     "devDependencies": {
