@@ -42,7 +42,7 @@ export class SettingsTab extends PluginSettingTab {
         this.addFormatOnSave();
         this.addFormatOnFileChange();
         this.addFormatCodeBlock();
-        this.addRemoveExtraSpaces();
+        // this.addRemoveExtraSpaces();
         this.addAddTrailingSpaces();
         this.addLanguageMappings();
         this.addFormatOptions();
