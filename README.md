@@ -6,70 +6,32 @@ This is an [Obsidian](https://obsidian.md) plugin that uses [Prettier](https://p
 
 The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plugin-prettier. Since that repository is not actively maintained and does not declare an open source license, I have re-implemented its features and added some new features.
 
+![Screenshot](./assets/screenshot.png)
+
 ## Features
 
--   Multi language support, currently available in Simplified Chinese and English.
--   Supports Markdown and MDX formats.
--   Format the entire content or only the selected content.
--   Automatically format the content when saving the file.
--   Automatically format the last opened file when the file is closed or switched to another file.
--   Format embedded code blocks. Currently supports js(x), ts(x), css, scss, less, html, json, and yaml.
--   Optionally remove extra spaces in formatted list items. See related discussions [issues#4114](https://github.com/prettier/prettier/issues/4114) and [issues#4281](https://github.com/prettier/prettier/issues/4281).
-
-    Example:
-
-    ```md
-    -␣␣␣item 1
-    -␣␣␣item 2
-    ```
-
-    Formatted:
-
-    ```md
-    -␣item 1
-    -␣item 2
-    ```
-
--   Optionally add trailing spaces that are removed after formatting. This ensures correct rendering in live preview mode.
-
-    Example:
-
-    ```md
-    -   -␣[ ]
-    ```
-
-    Formatted:
-
-    ```md
-    -␣
-    -␣[ ]␣
-    ```
-
--   Configurable Prettier formatting options. See [Prettier documentation](https://prettier.io/docs/en/configuration) for details.
-
-    Example:
-
-    ```json
-    {
-        "trailingComma": "es5",
-        "tabWidth": 4,
-        "semi": false,
-        "singleQuote": true
-    }
-    ```
-
--   Configurable ignore patterns. See [Prettier documentation](https://prettier.io/docs/en/ignore#ignoring-files-prettierignore) for details.
+- Multi language support, currently available in Simplified Chinese and English.
+- Supports Markdown and MDX formats.
+- Format the entire content or only the selected content.
+- Format embedded code blocks. Currently supports js(x), ts(x), css, scss, less, html, json, and yaml.
+- Supports remapping the language of the code block to another.
+- Optionally add trailing spaces that are removed after formatting. This ensures correct rendering in live preview mode.
 
     Example:
 
     ```text
-    **/.git
-    **/.svn
-    **/.hg
-    **/node_modules
+    -
+    -␣[ ]
     ```
 
--   Supports enabling or disabling formatting for the current file separately in frontmatter. Enabled by default when not set.
+    Formatted:
+
+    ```text
+    -␣
+    -␣[ ]␣
+    ```
+
+- Supports enabling or disabling formatting for the current file separately in frontmatter. Enabled by default when not set.
 
     Example:
 
@@ -79,7 +41,7 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
     ---
     ```
 
--   Supports enabling or disabling fast mode formatting for the current file separately in frontmatter. Disabled by default when not set.
+- Supports enabling or disabling fast mode formatting for the current file separately in frontmatter. Disabled by default when not set.
 
     Example:
 
@@ -91,13 +53,13 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
 
 ## Commands and Menus
 
--   Format all content
+- Format all content
 
     ID: `format-content`
 
     Hotkey: `None` (default)
 
--   Format selected content
+- Format selected content
 
     ID: `format-selection`
 
@@ -107,37 +69,37 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
 
 ## Settings
 
--   Format on save
+- Format on save
 
     Default: `false`
 
     Format the current content when saving the file.
 
--   Format on file change
+- Format on file change
 
     Default: `false`
 
     Format the last opened file when the file is closed or switched to another file.
 
--   Format code blocks
+- Format code blocks
 
     Default: `false`
 
     Include code blocks when formatting. Currently supports js(x), ts(x), css, scss, less, html, json, and yaml.
 
--   Remove extra spaces
-
-    Default: `false`
-
-    Remove extra spaces after bullet points in unordered lists.
-
--   Add trailing spaces
+- Add trailing spaces
 
     Default: `false`
 
     Add spaces at the end of empty list items to ensure correct rendering in live preview mode.
 
--   Format options
+- Code block language mappings
+
+    Default: `None`
+
+    Map code block languages from one to another. For example, after setting the mapping `dataviewjs → js`, Prettier will format all `dataviewjs` code blocks as `js` language.
+
+- Format options
 
     Default:
 
@@ -152,7 +114,7 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
 
     Formatting options passed to Prettier (in JSON format).
 
--   Ignore patterns
+- Ignore patterns
 
     Default:
 
@@ -164,6 +126,10 @@ The main inspiration comes from https://github.com/hipstersmoothie/obsidian-plug
     ```
 
     File patterns to ignore (relative to the vault directory).
+
+## Change Log
+
+See [CHANGELOG.md](./CHANGELOG.md).
 
 ## Development
 
