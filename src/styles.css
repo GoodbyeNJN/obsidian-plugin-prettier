@@ -37,6 +37,7 @@
 }
 
 .prettier-settings__mapping-button {
+    flex: 0 0 5em;
     margin-left: 1.5em;
 }
 
