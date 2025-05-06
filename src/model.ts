@@ -1,7 +1,7 @@
 import { isNullish, isPlainObject } from "remeda";
 
 import type { Options } from "prettier";
-import type { ReadonlyTuple } from "type-fest";
+import { versionStrToNum } from "./utils/version";
 
 export interface Data {
     version: number;
@@ -37,13 +37,9 @@ export const getDefaultIgnorePatterns = (): string =>
 `.trim();
 
 export const getCurrentVersion = () => {
-    const { version } = manifest;
-    const [major, minor, patch] = version.split(".").map(Number) as unknown as ReadonlyTuple<
-        number,
-        3
-    >;
+    const version = versionStrToNum(manifest.version);
 
-    return major * 10000 + minor * 100 + patch;
+    return version;
 };
 
 export const getDefaultSettings = (): Settings => ({
@@ -70,13 +66,28 @@ export const migrate = (data: unknown): Data => {
     if (!Object.hasOwn(data, "version")) {
         const dataV1 = data as unknown as Settings;
         const dataV2: Data = {
-            version: 20000,
+            version: versionStrToNum("2.0.0"),
             settings: { ...dataV1, removeExtraSpaces: false },
         };
 
         return migrate(dataV2);
     }
 
-    // 2.0.0
+    // 2.0.0 -> 2.0.1
+    if (data.version === versionStrToNum("2.0.0")) {
+        const dataV2 = data as unknown as Data;
+        const dataV2_0_1: Data = {
+            version: versionStrToNum("2.0.1"),
+            settings: {
+                // @ts-expect-error
+                languageMappings: {},
+                ...dataV2.settings,
+            },
+        };
+
+        return migrate(dataV2_0_1);
+    }
+
+    // 2.0.1
     return data as unknown as Data;
 };
