@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   prettier:
-    hash: 6qre5qr3jcaytrefxzycclxr6i
+    hash: 6ce3a3b7006f79ba10e49c0c272aeb89f860cde952817751810c29e285185eb9
     path: scripts/patches/prettier.patch
 
 importers:
@@ -18,7 +18,7 @@ importers:
         version: 7.0.3
       prettier:
         specifier: ^3.4.2
-        version: 3.4.2(patch_hash=6qre5qr3jcaytrefxzycclxr6i)
+        version: 3.4.2(patch_hash=6ce3a3b7006f79ba10e49c0c272aeb89f860cde952817751810c29e285185eb9)
       remeda:
         specifier: ^2.19.1
         version: 2.19.1
@@ -43,7 +43,7 @@ importers:
         version: 9.18.0
       eslint-config-goodbyenjn:
         specifier: ^3.1.2
-        version: 3.1.2(eslint@9.18.0)(prettier@3.4.2(patch_hash=6qre5qr3jcaytrefxzycclxr6i))(typescript@5.7.3)
+        version: 3.1.2(eslint@9.18.0)(prettier@3.4.2(patch_hash=6ce3a3b7006f79ba10e49c0c272aeb89f860cde952817751810c29e285185eb9))(typescript@5.7.3)
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
@@ -1863,10 +1863,10 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-goodbyenjn@3.1.2(eslint@9.18.0)(prettier@3.4.2(patch_hash=6qre5qr3jcaytrefxzycclxr6i))(typescript@5.7.3):
+  eslint-config-goodbyenjn@3.1.2(eslint@9.18.0)(prettier@3.4.2(patch_hash=6ce3a3b7006f79ba10e49c0c272aeb89f860cde952817751810c29e285185eb9))(typescript@5.7.3):
     dependencies:
       eslint: 9.18.0
-      prettier: 3.4.2(patch_hash=6qre5qr3jcaytrefxzycclxr6i)
+      prettier: 3.4.2(patch_hash=6ce3a3b7006f79ba10e49c0c272aeb89f860cde952817751810c29e285185eb9)
       typescript: 5.7.3
 
   eslint-scope@8.2.0:
@@ -2149,7 +2149,7 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier@3.4.2(patch_hash=6qre5qr3jcaytrefxzycclxr6i): {}
+  prettier@3.4.2(patch_hash=6ce3a3b7006f79ba10e49c0c272aeb89f860cde952817751810c29e285185eb9): {}
 
   punycode@2.3.1: {}
 

@@ -54,6 +54,9 @@
     "pnpm": {
         "patchedDependencies": {
             "prettier": "scripts/patches/prettier.patch"
-        }
+        },
+        "onlyBuiltDependencies": [
+            "esbuild"
+        ]
     }
 }
