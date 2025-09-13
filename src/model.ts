@@ -1,4 +1,4 @@
-import { isNullish, isPlainObject } from "remeda";
+import { isNullish, isPlainObject } from "@goodbyenjn/utils/remeda";
 
 import { versionStrToNum } from "./utils/version";
 

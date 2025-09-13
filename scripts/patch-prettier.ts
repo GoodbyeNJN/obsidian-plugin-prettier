@@ -1,45 +1,25 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 
 import path from "node:path";
 
-import { $ } from "zx";
+import { $ } from "@goodbyenjn/utils";
+import { rm, safeReadFile, safeWriteFile } from "@goodbyenjn/utils/fs";
+import { err, ok } from "@goodbyenjn/utils/result";
 
-import { rm, safeReadFile, safeWriteFile } from "@/utils/fs";
 import { MagicString } from "@/utils/string";
 
-import type { Promisable } from "type-fest";
-
-const withPatchEnv = async (pkg: string, fn: (dir: string) => Promisable<void>) => {
-    const temp = path.resolve(__dirname, "../.temp", pkg);
-
-    await rm(temp);
-    await $`pnpm patch ${pkg} --edit-dir ${temp}`;
-
-    try {
-        await fn(temp);
-    } catch (error) {
-        console.log("❌ Failed to patch files");
-        console.log(error);
-        await rm(temp);
-
-        process.exit(1);
-    }
-
-    await $`pnpm patch-commit --patches-dir ./scripts/patches ${temp}`;
-    await rm(temp);
-
-    console.log("✅ Patched files successfully");
-    process.exit(0);
-};
+import type { Result } from "@goodbyenjn/utils/result";
 
 const patch = async (temp: string) => {
     const patches = [
         {
             filepaths: ["standalone.js", "standalone.mjs"],
             handler: (content: string) =>
-                content.replace(
-                    '{astFormat:"estree",',
-                    '{__languageMappings:new Map(),astFormat:"estree",',
+                ok(
+                    content.replace(
+                        '{astFormat:"estree",',
+                        '{__languageMappings:new Map(),astFormat:"estree",',
+                    ),
                 ),
         },
         {
@@ -47,35 +27,37 @@ const patch = async (temp: string) => {
             handler: (content: string) => {
                 const string = new MagicString(content);
 
-                const [optionsVarName, nodeVarName] = (() => {
+                let optionsVarName: string;
+                let nodeVarName: string;
+                {
                     const matches = string.match<2>(
                         /function \w+\(\w+,(\w+)\)\{let\{node:(\w+)\}=\w+;/,
                     );
                     if (matches.length !== 1) {
-                        throw new Error(`Function not found: function XX(X1,X2){let{node:X}=X1;`);
+                        return err(`Function not found: function XX(X1,X2){let{node:X}=X1;`);
                     }
 
                     const [optionsVar, nodeVar] = matches[0]!;
-                    const optionsVarName = optionsVar.text;
-                    const nodeVarName = nodeVar.text;
+                    optionsVarName = optionsVar.text;
+                    nodeVarName = nodeVar.text;
+                }
 
-                    return [optionsVarName, nodeVarName];
-                })();
-
-                const [replaceStart, replaceEnd] = (() => {
+                let replaceStart: number;
+                let replaceEnd: number;
+                {
                     const matches = string.match<2>(
                         /(if\(\w+\.type==="code"&&\w+\.lang!==null\)\{).*(return \w+\(\[\w+,\w+\.lang,\w+\.meta)/,
                     );
                     if (matches.length !== 1) {
-                        throw new Error(
+                        return err(
                             `Block not found: if(X.type==="code"&&X.lang!==null){ ... return XX([XXX,X.lang,X.meta`,
                         );
                     }
 
-                    const [replaceStart, replaceEnd] = matches[0]!;
-
-                    return [replaceStart.end, replaceEnd.start];
-                })();
+                    const [start, end] = matches[0]!;
+                    replaceStart = start.end;
+                    replaceEnd = end.start;
+                }
 
                 let offset = replaceEnd;
                 while (true) {
@@ -90,7 +72,7 @@ const patch = async (temp: string) => {
                     `const language = ${optionsVarName}.__languageMappings?.get(${nodeVarName}.lang) || ${nodeVarName}.lang;`,
                 );
 
-                return string.current;
+                return ok(string.current);
             },
         },
     ];
@@ -99,16 +81,46 @@ const patch = async (temp: string) => {
         const filepaths = patch.filepaths.map(filepath => path.resolve(temp, filepath));
 
         for (const filepath of filepaths) {
-            const content = await safeReadFile(filepath);
-
-            if (!content) {
-                throw new Error(`File not exits or empty: ${filepath}`);
+            const readResult = await safeReadFile(filepath);
+            if (!readResult.isOk()) {
+                return err(`Failed to read ${filepath}: ${readResult.error}`);
             }
 
-            const patched = patch.handler(content);
-            await safeWriteFile(filepath, patched);
+            const patchResult = patch.handler(readResult.value);
+            if (!patchResult.isOk()) {
+                return err(`Failed to patch ${filepath}: ${patchResult.error}`);
+            }
+
+            const writeResult = await safeWriteFile(filepath, patchResult.value);
+            if (!writeResult.isOk()) {
+                return err(`Failed to write ${filepath}: ${writeResult.error}`);
+            }
         }
     }
+
+    return ok();
+};
+
+const withPatchEnv = async (pkg: string, fn: (dir: string) => Promisable<Result<void, string>>) => {
+    const temp = path.resolve(__dirname, "../.temp", pkg);
+
+    await rm(temp);
+    await $`pnpm patch ${pkg} --edit-dir ${temp}`;
+
+    const result = await fn(temp);
+    if (!result.isOk()) {
+        console.log("× Failed to patch files");
+        console.log(result.error);
+        await rm(temp);
+
+        process.exit(1);
+    }
+
+    await $`pnpm patch-commit --patches-dir ./scripts/patches ${temp}`;
+    await rm(temp);
+
+    console.log("✓ Patched files successfully");
+    process.exit(0);
 };
 
 withPatchEnv("prettier", patch);

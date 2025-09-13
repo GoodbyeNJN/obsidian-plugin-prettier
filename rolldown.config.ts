@@ -1,10 +1,10 @@
 import path from "node:path";
 
+import { readFile, readJsonSync, writeFile } from "@goodbyenjn/utils/fs";
 import { defineConfig } from "rolldown";
 import { replacePlugin } from "rolldown/experimental";
 
 import packageJson from "./package.json";
-import { readFile, readJsonSync, writeFile } from "./src/utils/fs";
 
 import type PackageJson from "./package.json";
 
@@ -20,6 +20,9 @@ const output = isHotreloadEnabled
 
 const genManifest = () => {
     const packageJson = readJsonSync<typeof PackageJson>("package.json");
+    if (!packageJson) {
+        throw new Error(`Failed to read package.json`);
+    }
 
     const { version, description, author, obsidian } = packageJson;
     const { id, name, isDesktopOnly, minAppVersion } = obsidian;
@@ -39,6 +42,9 @@ const genManifest = () => {
 
 const writeStylesCss = async () => {
     const css = await readFile("src/styles.css");
+    if (css === null) {
+        throw new Error(`Failed to read styles.css`);
+    }
 
     await writeFile(path.join(output, "styles.css"), css);
 };

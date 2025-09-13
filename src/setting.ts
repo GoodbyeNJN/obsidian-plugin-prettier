@@ -1,3 +1,4 @@
+import { omit } from "@goodbyenjn/utils/remeda";
 import {
     ButtonComponent,
     PluginSettingTab,
@@ -5,7 +6,6 @@ import {
     TextAreaComponent,
     TextComponent,
 } from "obsidian";
-import { omit } from "remeda";
 
 import { fmt } from "./i18n";
 import { getDefaultFormatOptions, getDefaultIgnorePatterns } from "./model";

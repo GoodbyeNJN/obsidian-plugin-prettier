@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { isDefined } from "remeda";
+import { isDefined } from "@goodbyenjn/utils/remeda";
 import { globSync } from "tinyglobby";
 
 import { Formatter } from "@/formatter";
@@ -10,8 +10,8 @@ import { MagicString } from "@/utils/string";
 
 import type PrettierPlugin from "@/main";
 import type { Settings } from "@/model";
+import type { Merge } from "@goodbyenjn/utils/types";
 import type { App, Editor, FrontMatterCache, MetadataCache, TFile, Vault } from "obsidian";
-import type { Merge } from "type-fest";
 import type { Mock } from "vitest";
 
 type MockedObject<T> = Partial<{ [K in keyof T]: Mock }>;

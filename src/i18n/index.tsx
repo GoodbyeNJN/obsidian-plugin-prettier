@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unified-signatures */
 
+import { isDefined, isFunction, isString } from "@goodbyenjn/utils/remeda";
 import { moment } from "obsidian";
-import { isDefined, isFunction, isString } from "remeda";
 
 import { EN } from "./en";
 import { ZH_CN } from "./zh-cn";

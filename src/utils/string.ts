@@ -1,5 +1,5 @@
+import type { ReadonlyTuple } from "@goodbyenjn/utils/types";
 import type { EditorPosition } from "obsidian";
-import type { ReadonlyTuple } from "type-fest";
 
 interface Matched {
     text: string;
