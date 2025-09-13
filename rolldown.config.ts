@@ -3,16 +3,15 @@ import path from "node:path";
 import { defineConfig } from "rolldown";
 import { replacePlugin } from "rolldown/experimental";
 
-import { readFile, readJsonSync, writeFile } from "./src/utils/fs";
-
 import packageJson from "./package.json";
+import { readFile, readJsonSync, writeFile } from "./src/utils/fs";
 
 import type PackageJson from "./package.json";
 
 // eslint-disable-next-line import/order
 import "dotenv/config";
 
-const isWatchMode = process.env.ROLLDOWN_WATCH === "true";
+const isWatchMode = process.env["ROLLDOWN_WATCH"] === "true";
 const isHotreloadEnabled = isWatchMode && Boolean(process.env.OBSIDIAN_PLUGINS_DIR);
 
 const output = isHotreloadEnabled

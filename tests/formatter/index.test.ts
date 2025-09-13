@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import fg from "fast-glob";
+import { globSync } from "tinyglobby";
 import { isDefined } from "remeda";
 
 import { Formatter } from "@/formatter";
@@ -75,7 +75,7 @@ const read = (filepath: string) => fs.promises.readFile(filepath, "utf-8");
 const prepare = (...filepaths: string[]) =>
     Promise.all(
         filepaths
-            .flatMap(pattern => fg.sync(pattern))
+            .flatMap(pattern => globSync(pattern))
             .map(async filepath => {
                 const { base, name } = path.parse(filepath);
                 const content = new MagicString(await read(filepath));
