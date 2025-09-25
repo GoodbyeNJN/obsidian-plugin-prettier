@@ -1,4 +1,4 @@
-import { ReadonlyTuple } from "type-fest";
+import type { ReadonlyTuple } from "type-fest";
 
 export const versionStrToNum = (str: string) => {
     const [major, minor, patch] = str.split(".").map(Number) as unknown as ReadonlyTuple<number, 3>;

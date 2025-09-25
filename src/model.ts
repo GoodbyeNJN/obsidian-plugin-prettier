@@ -1,7 +1,8 @@
 import { isNullish, isPlainObject } from "remeda";
 
-import type { Options } from "prettier";
 import { versionStrToNum } from "./utils/version";
+
+import type { Options } from "prettier";
 
 export interface Data {
     version: number;

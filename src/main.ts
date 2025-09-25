@@ -18,7 +18,7 @@ export default class PrettierPlugin extends Plugin {
     private events: EventRef[] = [];
     private originalSaveCallback: Command["callback"];
 
-    async onload() {
+    override async onload() {
         await this.loadSettings();
 
         this.formatter = new Formatter(this);
@@ -32,7 +32,7 @@ export default class PrettierPlugin extends Plugin {
         this.addSettingTab(new SettingsTab(this));
     }
 
-    onunload() {
+    override onunload() {
         this.unregisterEvents();
         this.unhookSaveCommands();
     }
