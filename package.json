@@ -2,6 +2,7 @@
     "name": "obsidian-plugin-prettier",
     "version": "2.0.1",
     "description": "Format your notes with Prettier and custom formatting options.",
+    "type": "module",
     "main": "dist/main.js",
     "scripts": {
         "build": "rolldown -c rolldown.config.ts",
@@ -25,10 +26,10 @@
         "remeda": "^2.19.1"
     },
     "devDependencies": {
+        "@goodbyenjn/configs": "^6.1.1",
         "@types/node": "^22.10.7",
         "dotenv": "^16.4.7",
         "eslint": "^9.18.0",
-        "eslint-config-goodbyenjn": "^3.1.2",
         "jsx": "link:jsx",
         "obsidian": "1.7.2",
         "rolldown": "1.0.0-beta.37",

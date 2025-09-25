@@ -1,3 +1,3 @@
-const { withGoodbyeNJNConfig } = require("eslint-config-goodbyenjn/prettier");
+import { withConfig } from "@goodbyenjn/configs/prettier";
 
-module.exports = withGoodbyeNJNConfig();
+export default withConfig();

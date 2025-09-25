@@ -1,3 +1,3 @@
-const { withGoodbyeNJNConfig } = require("eslint-config-goodbyenjn");
+import { withConfig } from "@goodbyenjn/configs/eslint";
 
-module.exports = [...withGoodbyeNJNConfig()];
+export default withConfig();
