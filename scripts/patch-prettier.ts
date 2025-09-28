@@ -1,126 +1,204 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 
-import path from "node:path";
+import { err, ok, safeTry } from "@goodbyenjn/utils/result";
+import esquery from "esquery";
+import MagicString from "magic-string-stack";
+import { parseAsync } from "oxc-parser";
 
-import { $ } from "@goodbyenjn/utils";
-import { rm, safeReadFile, safeWriteFile } from "@goodbyenjn/utils/fs";
-import { err, ok } from "@goodbyenjn/utils/result";
+import { patch } from "./utils.ts";
 
-import { MagicString } from "@/utils/string";
+import type { Patch } from "./utils.ts";
+import type { FunctionDeclaration, Node, ObjectExpression, Property } from "estree";
 
-import type { Result } from "@goodbyenjn/utils/result";
+const baseSelector =
+    ":matches(Program, Program > ExpressionStatement > CallExpression > FunctionExpression > BlockStatement)";
 
-const patch = async (temp: string) => {
-    const patches = [
-        {
-            filepaths: ["standalone.js", "standalone.mjs"],
-            handler: (content: string) =>
-                ok(
-                    content.replace(
-                        '{astFormat:"estree",',
-                        '{__languageMappings:new Map(),astFormat:"estree",',
-                    ),
-                ),
-        },
-        {
-            filepaths: ["plugins/markdown.js", "plugins/markdown.mjs"],
-            handler: (content: string) => {
-                const string = new MagicString(content);
+const parse = async (filepath: string, content: string) => {
+    const result = await parseAsync(filepath, content, {
+        range: true,
+        sourceType: "module",
+    });
 
-                let optionsVarName: string;
-                let nodeVarName: string;
-                {
-                    const matches = string.match<2>(
-                        /function \w+\(\w+,(\w+)\)\{let\{node:(\w+)\}=\w+;/,
-                    );
-                    if (matches.length !== 1) {
-                        return err(`Function not found: function XX(X1,X2){let{node:X}=X1;`);
-                    }
-
-                    const [optionsVar, nodeVar] = matches[0]!;
-                    optionsVarName = optionsVar.text;
-                    nodeVarName = nodeVar.text;
-                }
-
-                let replaceStart: number;
-                let replaceEnd: number;
-                {
-                    const matches = string.match<2>(
-                        /(if\(\w+\.type==="code"&&\w+\.lang!==null\)\{).*(return \w+\(\[\w+,\w+\.lang,\w+\.meta)/,
-                    );
-                    if (matches.length !== 1) {
-                        return err(
-                            `Block not found: if(X.type==="code"&&X.lang!==null){ ... return XX([XXX,X.lang,X.meta`,
-                        );
-                    }
-
-                    const [start, end] = matches[0]!;
-                    replaceStart = start.end;
-                    replaceEnd = end.start;
-                }
-
-                let offset = replaceEnd;
-                while (true) {
-                    const [start, end] = string.find(`${nodeVarName}.lang`, replaceStart);
-                    if (start === -1 || start >= offset) break;
-
-                    offset = string.update(start, end, "language", offset);
-                }
-
-                string.insert(
-                    replaceStart,
-                    `const language = ${optionsVarName}.__languageMappings?.get(${nodeVarName}.lang) || ${nodeVarName}.lang;`,
-                );
-
-                return ok(string.current);
-            },
-        },
-    ];
-
-    for (const patch of patches) {
-        const filepaths = patch.filepaths.map(filepath => path.resolve(temp, filepath));
-
-        for (const filepath of filepaths) {
-            const readResult = await safeReadFile(filepath);
-            if (!readResult.isOk()) {
-                return err(`Failed to read ${filepath}: ${readResult.error}`);
-            }
-
-            const patchResult = patch.handler(readResult.value);
-            if (!patchResult.isOk()) {
-                return err(`Failed to patch ${filepath}: ${patchResult.error}`);
-            }
-
-            const writeResult = await safeWriteFile(filepath, patchResult.value);
-            if (!writeResult.isOk()) {
-                return err(`Failed to write ${filepath}: ${writeResult.error}`);
-            }
-        }
+    if (result.errors.length > 0) {
+        return err(result.errors).context(`Failed to parse file: ${filepath}`);
     }
+
+    return ok(result.program);
+};
+
+const transformPrettierStandalone = (magicString: MagicString, ast: Node) => {
+    /*
+    Looking for code like this:
+
+    var Nn = {
+        astFormat: "estree",
+        printer: {},
+        originalText: void 0,
+        locStart: null,
+        locEnd: null,
+    };
+     */
+    const keys = ["astFormat", "printer", "originalText", "locStart", "locEnd"];
+
+    const selector = [
+        baseSelector,
+        "VariableDeclaration",
+        "VariableDeclarator",
+        "ObjectExpression[properties.length=5]",
+    ].join(" > ");
+
+    let offset = -1;
+    for (const ObjectExpression of esquery(ast, selector) || []) {
+        const { properties } = ObjectExpression as ObjectExpression;
+
+        const condition = properties.every(
+            property =>
+                property.type === "Property" &&
+                property.key.type === "Identifier" &&
+                keys.includes(property.key.name),
+        );
+        if (!condition) continue;
+
+        offset = properties[0]!.range![0];
+
+        break;
+    }
+
+    if (offset === -1) return err("Failed to find the target property node");
+
+    magicString.prependLeft(offset, "__languageMappings: new Map(),");
 
     return ok();
 };
 
-const withPatchEnv = async (pkg: string, fn: (dir: string) => Promisable<Result<void, string>>) => {
-    const temp = path.resolve(__dirname, "../.temp", pkg);
+const transformPrettierMarkdown = (magicString: MagicString, ast: Node) => {
+    /*
+    Looking for code like this:
 
-    await rm(temp);
-    await $`pnpm patch ${pkg} --edit-dir ${temp}`;
+    function tf(e, r) {
+        let { node: t } = e;
+        if (t.type === "code" && t.lang !== null) {
+            let n = wi(r, { language: t.lang });
+            ...
+        }
+        ...
+    }
+     */
+    const functionSelector = [baseSelector, "FunctionDeclaration[params.length=2]"].join(" > ");
 
-    const result = await fn(temp);
-    if (!result.isOk()) {
-        console.log("× Failed to patch files");
-        console.log(result.error);
-        await rm(temp);
+    let secondParamName = "";
+    let nodePropertyName = "";
+    let insertOffset = -1;
+    let overwriteStart = -1;
+    let overwriteEnd = -1;
+    for (const FunctionDeclaration of esquery(ast, functionSelector) || []) {
+        let firstParamName = "";
+        {
+            const { params } = FunctionDeclaration as FunctionDeclaration;
+            const condition = params.every(param => param.type === "Identifier");
+            if (!condition) continue;
 
-        process.exit(1);
+            firstParamName = params[0]!.name;
+            secondParamName = params[1]!.name;
+        }
+
+        {
+            const propertySelector = [
+                "BlockStatement",
+                "VariableDeclaration",
+                `VariableDeclarator:has(> Identifier[name=${firstParamName}])`,
+                "ObjectPattern[properties.length=1]:has(> Property[key.name='node'])",
+                "Property:first-child",
+            ].join(" > ");
+
+            const [Property, ...nodes] = esquery(FunctionDeclaration, propertySelector) || [];
+            if (!Property || nodes.length !== 0) continue;
+
+            const { value } = Property as Property;
+            if (value.type !== "Identifier") continue;
+
+            nodePropertyName = value.name;
+        }
+
+        {
+            const leftBinaryExpressionSelector = `BinaryExpression[operator='===']${[
+                `MemberExpression[object.name=${nodePropertyName}]}[property.name='type']`,
+                "Literal[value='code']",
+            ].map(selector => `:has(> ${selector})`)}`;
+            const rightBinaryExpressionSelector = `BinaryExpression[operator='!==']${[
+                `MemberExpression[object.name=${nodePropertyName}]}[property.name='lang']`,
+                "Literal[value=null]",
+            ].map(selector => `:has(> ${selector})`)}`;
+            const testSelector = `LogicalExpression[operator='&&']${[
+                leftBinaryExpressionSelector,
+                rightBinaryExpressionSelector,
+            ].map(selector => `:has(> ${selector})`)}`;
+            const variableDeclarationSelector = [
+                "BlockStatement",
+                `IfStatement:has(> ${testSelector})`,
+                "BlockStatement",
+                "VariableDeclaration:first-child",
+            ].join(" > ");
+
+            const [VariableDeclaration, ...nodes] =
+                esquery(FunctionDeclaration, variableDeclarationSelector) || [];
+            if (!VariableDeclaration || nodes.length !== 0) continue;
+
+            insertOffset = VariableDeclaration.range![0];
+
+            {
+                const propertySelector = [
+                    "VariableDeclarator",
+                    "CallExpression[arguments.length=2]:has(> Identifier)",
+                    "ObjectExpression[properties.length=1]:has(> Property[key.name='language'])",
+                    "Property:first-child",
+                ].join(" > ");
+
+                const [Property, ...nodes2] = esquery(VariableDeclaration, propertySelector) || [];
+                if (!Property || nodes2.length !== 0) continue;
+
+                overwriteStart = Property.range![0];
+                overwriteEnd = Property.range![1];
+
+                break;
+            }
+        }
     }
 
-    await $`pnpm patch-commit --patches-dir ./scripts/patches ${temp}`;
-    await rm(temp);
+    magicString.prependLeft(
+        insertOffset,
+        `const language = ${secondParamName}.__languageMappings?.get(${nodePropertyName}.lang) || ${nodePropertyName}.lang;`,
+    );
+    magicString.overwrite(overwriteStart, overwriteEnd, "language");
 
-    console.log("✓ Patched files successfully");
-    process.exit(0);
+    return ok();
 };
 
-withPatchEnv("prettier", patch);
+const patches: Patch[] = [
+    {
+        pattern: "standalone.{js,mjs}",
+        handler: (filepath, content) =>
+            safeTry(async function* () {
+                const ast = yield* await parse(filepath, content);
+                const magicString = new MagicString(content);
+
+                yield* transformPrettierStandalone(magicString, ast as Node);
+
+                return ok(magicString.toString());
+            }),
+    },
+    {
+        pattern: "plugins/markdown.{js,mjs}",
+        handler: (filepath, content) =>
+            safeTry(async function* () {
+                const ast = yield* await parse(filepath, content);
+                const magicString = new MagicString(content);
+
+                transformPrettierMarkdown(magicString, ast as Node);
+
+                return ok(magicString.toString());
+            }),
+    },
+];
+
+patch("prettier", patches);
