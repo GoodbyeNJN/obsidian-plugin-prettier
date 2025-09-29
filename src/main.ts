@@ -16,7 +16,7 @@ export default class PrettierPlugin extends Plugin {
     private formatter!: Formatter;
     private lastActiveFile: TFile | null = null;
     private events: EventRef[] = [];
-    private originalSaveCallback: Command["callback"];
+    private originalSaveCallback: Command["checkCallback"];
 
     override async onload() {
         await this.loadSettings();
@@ -118,19 +118,19 @@ export default class PrettierPlugin extends Plugin {
 
     private hookSaveCommands() {
         const saveCommand = this.app.commands.commands["editor:save-file"];
-        const saveCallback = saveCommand?.callback;
+        const saveCallback = saveCommand?.checkCallback;
         if (!saveCommand || !saveCallback) return;
 
         this.originalSaveCallback = saveCallback;
-        saveCommand.callback = async () => {
+        saveCommand.checkCallback = checking => {
+            if (checking) return saveCallback(checking);
+
             const view = this.app.workspace.getActiveViewOfType(MarkdownView);
             if (view) {
-                await this.withPerformanceNotice(() =>
-                    this.formatter.formatOnSave(view.editor, view.file),
-                );
+                withPerfNotice(() => this.formatter.formatOnSave(view.editor, view.file));
             }
 
-            await saveCallback();
+            saveCallback(checking);
         };
     }
 
@@ -138,7 +138,7 @@ export default class PrettierPlugin extends Plugin {
         const saveCommand = this.app.commands.commands["editor:save-file"];
         if (!saveCommand || !this.originalSaveCallback) return;
 
-        saveCommand.callback = this.originalSaveCallback;
+        saveCommand.checkCallback = this.originalSaveCallback;
     }
 
     private registerMenu() {
