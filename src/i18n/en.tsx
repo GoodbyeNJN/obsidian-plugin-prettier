@@ -10,8 +10,13 @@ export const EN = {
             time: "",
         },
     },
+    "notice:load-settings-error": "Error loading plugin settings, please check the console logs.",
+    "notice:register-plugin-error": "Error registering plugin, please check the console logs.",
     "command:format-content-name": "Format all content",
     "command:format-selection-name": "Format selected content",
+    "setting:error-boundary-title": "Settings panel failed to load",
+    "setting:error-boundary-description":
+        "Error loading settings panel, please check the error message below.",
     "setting:format-on-save-name": "Format on save",
     "setting:format-on-save-description": "Format the current content when saving the file.",
     "setting:format-on-file-change-name": "Format on file change",

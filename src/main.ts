@@ -4,7 +4,7 @@ import { Formatter } from "./formatter";
 import { fmt } from "./i18n";
 import { getCurrentVersion, getDefaultSettings, migrate } from "./model";
 import { SettingsTab } from "./setting";
-import { withPerfNotice } from "./utils/common";
+import { logger, showNotice, withPerfNotice } from "./utils/common";
 
 import type { Data } from "./model";
 import type { Command, EventRef, TFile } from "obsidian";
@@ -19,15 +19,44 @@ export default class PrettierPlugin extends Plugin {
     private originalSaveCallback: Command["checkCallback"];
 
     override async onload() {
-        await this.loadSettings();
+        logger("Loading plugin...");
+
+        try {
+            await this.loadSettings();
+        } catch (error) {
+            logger("Error loading plugin settings:", error);
+            showNotice(fmt("notice:load-settings-error"));
+        }
 
         this.formatter = new Formatter(this);
 
-        this.registerCommands();
-        this.registerEvents();
-        this.hookSaveCommands();
+        try {
+            try {
+                const { formatContentCommand, formatSelectionCommand } = this.registerCommands();
+                if (!formatContentCommand || !formatSelectionCommand) {
+                    const missing = [];
+                    if (!formatContentCommand) missing.push("format-content");
+                    if (!formatSelectionCommand) missing.push("format-selection");
 
+                    throw new Error(`Failed to register commands: ${missing.join(", ")}`);
+                }
+            } catch (error) {
+                logger("Error registering commands:", error);
+            }
+
+            try {
+                this.hookSaveCommands();
+            } catch (error) {
+                logger("Error hooking save commands:", error);
+            }
+        } catch {
+            showNotice(fmt("notice:register-plugin-error"));
+        }
+
+        this.registerEvents();
         this.registerMenu();
+
+        logger("Plugin loaded.");
 
         this.addSettingTab(new SettingsTab(this));
     }
@@ -54,7 +83,7 @@ export default class PrettierPlugin extends Plugin {
     }
 
     private registerCommands() {
-        this.addCommand({
+        const formatContentCommand = this.addCommand({
             id: "format-content",
             name: fmt("command:format-content-name"),
             editorCallback: async (editor, view) => {
@@ -62,7 +91,7 @@ export default class PrettierPlugin extends Plugin {
             },
         });
 
-        this.addCommand({
+        const formatSelectionCommand = this.addCommand({
             id: "format-selection",
             name: fmt("command:format-selection-name"),
             editorCheckCallback: (checking, editor, view) => {
@@ -73,6 +102,8 @@ export default class PrettierPlugin extends Plugin {
                 return editor.somethingSelected();
             },
         });
+
+        return { formatContentCommand, formatSelectionCommand };
     }
 
     private registerEvents() {

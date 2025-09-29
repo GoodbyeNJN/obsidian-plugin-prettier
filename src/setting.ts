@@ -9,6 +9,7 @@ import {
 
 import { fmt } from "./i18n";
 import { getDefaultFormatOptions, getDefaultIgnorePatterns } from "./model";
+import { logger } from "./utils/common";
 
 import type PrettierPlugin from "./main";
 import type { Settings } from "./model";
@@ -39,14 +40,55 @@ export class SettingsTab extends PluginSettingTab {
     display() {
         this.containerEl.empty();
 
-        this.addFormatOnSave();
-        this.addFormatOnFileChange();
-        this.addFormatCodeBlock();
-        // this.addRemoveExtraSpaces();
-        this.addAddTrailingSpaces();
-        this.addLanguageMappings();
-        this.addFormatOptions();
-        this.addIgnorePatterns();
+        try {
+            this.addFormatOnSave();
+            this.addFormatOnFileChange();
+            this.addFormatCodeBlock();
+            // this.addRemoveExtraSpaces();
+            this.addAddTrailingSpaces();
+            this.addLanguageMappings();
+            this.addFormatOptions();
+            this.addIgnorePatterns();
+        } catch (error) {
+            logger("Error displaying settings tab:", error);
+            this.containerEl.empty();
+            this.showErrorBoundary(error);
+        }
+    }
+
+    private showErrorBoundary(error: unknown) {
+        const errorBoundary = this.containerEl.createDiv("prettier-settings__error-boundary");
+        errorBoundary.createSpan({
+            text: fmt("setting:error-boundary-title"),
+            cls: "prettier-settings__error-boundary-title",
+        });
+        errorBoundary.createSpan({
+            text: fmt("setting:error-boundary-description"),
+            cls: "prettier-settings__error-boundary-description",
+        });
+
+        let message = "";
+        if (error instanceof Error) {
+            message = error.message;
+
+            if (error.stack) {
+                message += `\n\n${error.stack}`;
+            }
+        } else if (typeof error === "string") {
+            message = error;
+        } else {
+            try {
+                message = JSON.stringify(error, null, 2);
+            } catch {
+                message = String(error);
+            }
+        }
+
+        errorBoundary
+            .createEl("pre", "prettier-settings__error-boundary-message")
+            .createEl("code", {
+                text: message,
+            });
     }
 
     private addFormatOnSave() {

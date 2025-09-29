@@ -2,8 +2,12 @@ import type { JSX } from "jsx/jsx-runtime";
 
 export type LangKey =
     | "notice:format-too-slow"
+    | "notice:load-settings-error"
+    | "notice:register-plugin-error"
     | "command:format-content-name"
     | "command:format-selection-name"
+    | "setting:error-boundary-title"
+    | "setting:error-boundary-description"
     | "setting:format-on-save-name"
     | "setting:format-on-save-description"
     | "setting:format-on-file-change-name"

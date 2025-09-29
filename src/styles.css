@@ -1,3 +1,35 @@
+.prettier-settings__error-boundary-title {
+    display: block;
+    font-size: 1.4em;
+}
+
+.prettier-settings__error-boundary-description {
+    display: block;
+    font-size: 1em;
+    margin-top: 1.2em;
+}
+
+.prettier-settings__error-boundary-message {
+    display: block;
+    overflow: auto;
+    margin-top: 2.4em;
+    padding: 1em;
+    max-height: 20em;
+    color: var(--text-muted);
+    font-family: var(--font-monospace);
+    font-size: 0.85em;
+    line-height: 1.4em;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 0.25em;
+    background: var(--background-secondary);
+}
+
+.prettier-settings__error-boundary-message > code {
+    display: block;
+}
+
 .setting-item-extra {
     display: flex;
     flex-direction: column;
