@@ -1,10 +1,10 @@
-import { MarkdownView, Notice, Plugin } from "obsidian";
+import { MarkdownView, Plugin } from "obsidian";
 
 import { Formatter } from "./formatter";
 import { fmt } from "./i18n";
 import { getCurrentVersion, getDefaultSettings, migrate } from "./model";
 import { SettingsTab } from "./setting";
-import { timer } from "./utils/common";
+import { withPerfNotice } from "./utils/common";
 
 import type { Data } from "./model";
 import type { Command, EventRef, TFile } from "obsidian";
@@ -58,9 +58,7 @@ export default class PrettierPlugin extends Plugin {
             id: "format-content",
             name: fmt("command:format-content-name"),
             editorCallback: async (editor, view) => {
-                await this.withPerformanceNotice(() =>
-                    this.formatter.formatContent(editor, view.file),
-                );
+                await withPerfNotice(() => this.formatter.formatContent(editor, view.file));
             },
         });
 
@@ -69,9 +67,7 @@ export default class PrettierPlugin extends Plugin {
             name: fmt("command:format-selection-name"),
             editorCheckCallback: (checking, editor, view) => {
                 if (!checking) {
-                    this.withPerformanceNotice(() =>
-                        this.formatter.formatSelection(editor, view.file),
-                    );
+                    withPerfNotice(() => this.formatter.formatSelection(editor, view.file));
                 }
 
                 return editor.somethingSelected();
@@ -164,16 +160,5 @@ export default class PrettierPlugin extends Plugin {
                     );
             }),
         );
-    }
-
-    private async withPerformanceNotice(fn: () => void | Promise<void>) {
-        const stop = timer();
-
-        await fn();
-
-        const time = stop() / 1000;
-        if (time > 5) {
-            const _notice = new Notice(fmt("notice:format-too-slow", { time: time.toFixed(2) }));
-        }
     }
 }
