@@ -1,8 +1,8 @@
 import path from "node:path";
 
-import { readFile, readJsonSync, writeFile } from "@goodbyenjn/utils/fs";
+import { readJson } from "@goodbyenjn/utils/fs";
+import MagicStringStack from "magic-string-stack";
 import { defineConfig } from "rolldown";
-import { replacePlugin } from "rolldown/experimental";
 
 import packageJson from "./package.json";
 
@@ -18,8 +18,8 @@ const output = isHotreloadEnabled
     ? path.resolve(process.env.OBSIDIAN_PLUGINS_DIR!, `${packageJson.obsidian.id}-dev`)
     : "dist";
 
-const genManifest = () => {
-    const packageJson = readJsonSync<typeof PackageJson>("package.json");
+const genManifest = async () => {
+    const packageJson = await readJson<typeof PackageJson>("package.json");
     if (!packageJson) {
         throw new Error(`Failed to read package.json`);
     }
@@ -40,29 +40,9 @@ const genManifest = () => {
     return JSON.stringify(manifest, null, 4);
 };
 
-const writeStylesCss = async () => {
-    const css = await readFile("src/styles.css");
-    if (css === null) {
-        throw new Error(`Failed to read styles.css`);
-    }
-
-    await writeFile(path.join(output, "styles.css"), css);
-};
-
-const writeManifestJson = async () => {
-    const json = genManifest() + "\n";
-
-    const outputs = [path.join(output, "manifest.json")];
-    if (!isWatchMode) {
-        outputs.push("manifest.json");
-    }
-
-    await Promise.all(outputs.map(output => writeFile(output, json)));
-};
-
 export default defineConfig([
     {
-        input: "src/main.ts",
+        input: ["src/main.ts", "src/styles.css", "package.json"],
 
         output: {
             dir: output,
@@ -74,38 +54,41 @@ export default defineConfig([
         tsconfig: "tsconfig.json",
 
         plugins: [
-            replacePlugin(
-                {
-                    "process.env.MANIFEST": genManifest(),
-                },
-                { preventAssignment: true },
-            ),
-
             {
                 name: "plugin:assets",
-                buildStart() {
-                    this.addWatchFile("src/styles.css");
-                    this.addWatchFile("package.json");
+                load: {
+                    filter: {
+                        id: /package\.json$/,
+                    },
+                    handler() {
+                        return "null";
+                    },
                 },
-                async watchChange(id) {
-                    switch (path.basename(id)) {
-                        case "styles.css": {
-                            await writeStylesCss();
-                            break;
-                        }
-                        case "package.json": {
-                            await writeManifestJson();
-                            break;
-                        }
-                    }
+                transform: {
+                    filter: {
+                        code: "process.env.MANIFEST",
+                    },
+                    async handler(code) {
+                        const s = new MagicStringStack(code);
+                        s.replaceAll("process.env.MANIFEST", await genManifest());
+
+                        return {
+                            code: s.toString(),
+                            map: s.generateMap(),
+                        };
+                    },
                 },
-                async writeBundle() {
-                    const promises = [writeStylesCss(), writeManifestJson()];
-                    if (isHotreloadEnabled) {
-                        promises.push(writeFile(path.join(output, ".hotreload"), ""));
+                async generateBundle(_, bundle) {
+                    for (const [k, v] of Object.entries(bundle)) {
+                        if (v.type === "asset" || v.name === "main") continue;
+                        delete bundle[k];
                     }
 
-                    await Promise.all(promises);
+                    this.emitFile({
+                        type: "asset",
+                        fileName: "manifest.json",
+                        source: await genManifest(),
+                    });
                 },
             },
         ],
