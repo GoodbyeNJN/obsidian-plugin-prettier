@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { globSync } from "@goodbyenjn/utils/fs";
 import { isDefined } from "@goodbyenjn/utils/remeda";
-import { globSync } from "tinyglobby";
 
 import { Formatter } from "@/formatter";
 import { getDefaultSettings } from "@/model";

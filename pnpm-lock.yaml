@@ -45,9 +45,6 @@ importers:
       rolldown:
         specifier: 1.0.0-rc.3
         version: 1.0.0-rc.3
-      tinyglobby:
-        specifier: ^0.2.15
-        version: 0.2.15
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

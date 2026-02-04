@@ -36,7 +36,6 @@
         "obsidian": "^1.11.4",
         "prettier": "^3.8.1",
         "rolldown": "1.0.0-rc.3",
-        "tinyglobby": "^0.2.15",
         "typescript": "^5.9.3",
         "vite-tsconfig-paths": "^6.0.5",
         "vitest": "^4.0.18"
