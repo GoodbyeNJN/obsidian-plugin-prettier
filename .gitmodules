@@ -1,0 +1,3 @@
+[submodule "prettier"]
+	path = prettier
+	url = git@github.com:prettier/prettier.git
