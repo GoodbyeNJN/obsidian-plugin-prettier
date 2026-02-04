@@ -21,27 +21,27 @@
     },
     "license": "MIT",
     "dependencies": {
-        "@goodbyenjn/utils": "^1.3.1",
+        "@goodbyenjn/utils": "^26.2.0",
         "ignore": "^7.0.5",
         "magic-string-stack": "^1.1.0",
-        "prettier": "^3.6.2"
+        "prettier": "^3.8.1"
     },
     "devDependencies": {
-        "@goodbyenjn/configs": "^6.1.1",
+        "@goodbyenjn/configs": "^6.1.4",
         "@types/esquery": "^1.5.4",
         "@types/estree": "^1.0.8",
-        "@types/node": "^24.5.2",
-        "dotenv": "^17.2.2",
-        "eslint": "^9.36.0",
-        "esquery": "^1.6.0",
+        "@types/node": "^25.2.1",
+        "dotenv": "^17.2.3",
+        "eslint": "^9.39.2",
+        "esquery": "^1.7.0",
         "jsx": "link:jsx",
-        "obsidian": "1.8.7",
-        "oxc-parser": "^0.93.0",
-        "rolldown": "1.0.0-beta.40",
+        "obsidian": "^1.11.4",
+        "oxc-parser": "^0.112.0",
+        "rolldown": "1.0.0-rc.3",
         "tinyglobby": "^0.2.15",
-        "typescript": "^5.9.2",
-        "vite-tsconfig-paths": "^5.1.4",
-        "vitest": "^3.2.4"
+        "typescript": "^5.9.3",
+        "vite-tsconfig-paths": "^6.0.5",
+        "vitest": "^4.0.18"
     },
     "obsidian": {
         "id": "prettier",
