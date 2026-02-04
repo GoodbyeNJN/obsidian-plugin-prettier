@@ -1,0 +1,3 @@
+{
+    "vitest.configSearchPatternExclude": "{**/node_modules/**,**/vendor/**,**/.*/**,**/*.d.ts,**/prettier/**}"
+}
