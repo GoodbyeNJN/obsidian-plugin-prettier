@@ -1,9 +1,9 @@
-import pluginBabel from "prettier/plugins/babel";
-import pluginEstree from "prettier/plugins/estree";
-import pluginMarkdown from "prettier/plugins/markdown";
-import prettier from "prettier/standalone";
+import pluginBabel from "prettier-mod/plugins/babel";
+import pluginEstree from "prettier-mod/plugins/estree";
+import pluginMarkdown from "prettier-mod/plugins/markdown";
+import prettier from "prettier-mod/standalone";
 
-import type { Options } from "prettier";
+import type { Options } from "prettier-mod";
 
 const text = `
 \`\`\`noscript

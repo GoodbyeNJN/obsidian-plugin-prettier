@@ -1,12 +1,13 @@
 import createIgnore from "ignore";
-import pluginBabel from "prettier/plugins/babel";
-import pluginEstree from "prettier/plugins/estree";
-import pluginHtml from "prettier/plugins/html";
-import pluginMarkdown from "prettier/plugins/markdown";
-import pluginPostcss from "prettier/plugins/postcss";
-import pluginTypescript from "prettier/plugins/typescript";
-import pluginYaml from "prettier/plugins/yaml";
-import prettier from "prettier/standalone";
+
+import pluginBabel from "prettier-mod/plugins/babel";
+import pluginEstree from "prettier-mod/plugins/estree";
+import pluginHtml from "prettier-mod/plugins/html";
+import pluginMarkdown from "prettier-mod/plugins/markdown";
+import pluginPostcss from "prettier-mod/plugins/postcss";
+import pluginTypescript from "prettier-mod/plugins/typescript";
+import pluginYaml from "prettier-mod/plugins/yaml";
+import prettier from "prettier-mod/standalone";
 
 import { MagicString } from "./utils/string";
 
@@ -14,7 +15,7 @@ import type PrettierPlugin from "./main";
 import type { Settings } from "./model";
 import type { Ignore } from "ignore";
 import type { App, Editor, TFile } from "obsidian";
-import type { Options } from "prettier";
+import type { Options } from "prettier-mod";
 
 const USE_PRETTIER_KEY = "prettier";
 const USE_FAST_MODE_KEY = "prettier-fast-mode";

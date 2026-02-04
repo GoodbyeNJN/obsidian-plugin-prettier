@@ -2,7 +2,7 @@ import { isNullish, isPlainObject } from "@goodbyenjn/utils/remeda";
 
 import { versionStrToNum } from "./utils/version";
 
-import type { Options } from "prettier";
+import type { Options } from "prettier-mod";
 
 export interface Data {
     version: number;

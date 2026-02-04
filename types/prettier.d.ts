@@ -1,5 +1,5 @@
-import type { SupportLanguage } from "prettier";
+import type { SupportLanguage } from "prettier-mod";
 
-declare module "prettier/plugins/markdown" {
+declare module "prettier-mod/plugins/markdown" {
     export const languages: SupportLanguage[];
 }
