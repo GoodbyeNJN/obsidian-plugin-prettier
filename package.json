@@ -43,6 +43,7 @@
         "vite-tsconfig-paths": "^6.0.5",
         "vitest": "^4.0.18"
     },
+    "prettier": "@goodbyenjn/configs/prettier",
     "obsidian": {
         "id": "prettier",
         "name": "Prettier",
