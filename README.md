@@ -147,21 +147,39 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
     The built files will be located in the `dist` directory.
 
-3.  Load the plugin in Obsidian.
+3.  Copy the built files to your Obsidian vault's plugins directory (e.g., `/path/to/Vault/.obsidian/plugins/prettier-dev`).
 
-4.  You can also use the following command to watch for file changes and automatically build:
+4.  Load the plugin in Obsidian.
+
+5.  You can also use the following command to watch for file changes and automatically rebuild:
 
     ```bash
     pnpm dev
     ```
 
-    If the `OBSIDIAN_PLUGINS_DIR` environment variable is set, the built files will also be automatically copied to the `$OBSIDIAN_PLUGINS_DIR/prettier-dev` directory.
+### Optional: Link plugin directory for easier development
 
-    ```bash
-    OBSIDIAN_PLUGINS_DIR=/path/to/the/plugins/directory pnpm dev
-    ```
+To avoid manually copying files each time, you can create a symbolic link from your Obsidian vault's plugin directory to the `dist` directory in this repository.
 
-    Alternatively, copy `.env.example` to `.env` and modify the `OBSIDIAN_PLUGINS_DIR` value.
+On Linux/macOS:
+
+```bash
+ln -s /path/to/Vault/.obsidian/plugins/prettier-dev dist
+```
+
+On Windows (using Command Prompt as Administrator):
+
+```cmd
+mklink /D "dist" "C:\path\to\Vault\.obsidian\plugins\prettier-dev"
+```
+
+On Windows (using PowerShell as Administrator):
+
+```powershell
+New-Item -ItemType SymbolicLink -Path "dist" -Target "C:\path\to\Vault\.obsidian\plugins\prettier-dev"
+```
+
+With this setup and the [Hot Reload](https://github.com/pjeby/hot-reload) plugin installed in Obsidian, the plugin will automatically reload when files are changed and rebuilt.
 
 ## License
 

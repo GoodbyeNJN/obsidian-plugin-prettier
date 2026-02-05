@@ -5,8 +5,8 @@
     "type": "module",
     "main": "dist/main.js",
     "scripts": {
-        "build": "rolldown -c rolldown.config.ts",
-        "dev": "rolldown -c rolldown.config.ts -w",
+        "build": "rolldown -c",
+        "dev": "rolldown -w -c",
         "test": "vitest",
         "prepare": "scripts/prepare.ts"
     },
@@ -24,13 +24,11 @@
     "dependencies": {
         "@goodbyenjn/utils": "^26.2.0",
         "ignore": "^7.0.5",
-        "magic-string-stack": "^1.1.0",
         "prettier-mod": "link:.temp/prettier"
     },
     "devDependencies": {
         "@goodbyenjn/configs": "^6.1.4",
         "@types/node": "^25.2.1",
-        "dotenv": "^17.2.3",
         "eslint": "^9.39.2",
         "jsx": "link:jsx",
         "obsidian": "^1.11.4",
