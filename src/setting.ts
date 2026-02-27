@@ -47,6 +47,7 @@ export class SettingsTab extends PluginSettingTab {
             // this.addRemoveExtraSpaces();
             this.addAddTrailingSpaces();
             this.addLanguageMappings();
+            this.addLanguageFilter();
             this.addFormatOptions();
             this.addIgnorePatterns();
         } catch (error) {
@@ -203,6 +204,89 @@ export class SettingsTab extends PluginSettingTab {
             to.setValue(v).setDisabled(true);
             button.setButtonText(fmt("setting:delete-button-name")).onClick(() => {
                 this.data.languageMappings = omit(this.data.languageMappings, [k]);
+                this.display();
+            });
+        }
+    }
+
+    private addLanguageFilter() {
+        const addTextInput = (containerEl: HTMLElement) => {
+            const input = new TextComponent(containerEl);
+
+            const setValid = (isValid: boolean) => {
+                if (isValid) {
+                    input.inputEl.classList.remove("invalid");
+                } else {
+                    input.inputEl.classList.add("invalid");
+                }
+
+                return input;
+            };
+
+            input.inputEl.className = "prettier-settings__filter-text";
+            input.onChange(value => {
+                setValid(value.length !== 0);
+            });
+
+            return Object.assign(input, { setValid });
+        };
+
+        const addFilter = (containerEl: HTMLElement) => {
+            const container = containerEl.createDiv("prettier-settings__filter");
+
+            const input = addTextInput(container);
+
+            const button = new ButtonComponent(container).setClass(
+                "prettier-settings__filter-button",
+            );
+
+            return { container, input, button };
+        };
+
+        new Setting(this.containerEl)
+            .setName(fmt("setting:language-filter-name"))
+            .setDesc(fmt("setting:language-filter-description"))
+            .addDropdown(component => {
+                component
+                    .addOption("off", fmt("setting:language-filter-option-off"))
+                    .addOption("whitelist", fmt("setting:language-filter-option-whitelist"))
+                    .addOption("blacklist", fmt("setting:language-filter-option-blacklist"))
+                    .setValue(this.data.__languageFilters.type || "off")
+                    .onChange(value => {
+                        this.data.__languageFilters = {
+                            type: value === "off" ? "" : (value as "whitelist" | "blacklist"),
+                            list: this.data.__languageFilters.list,
+                        };
+                    });
+            });
+
+        const extra = this.containerEl.createDiv("setting-item-extra");
+
+        const { container, input, button } = addFilter(extra);
+        container.addClass("prettier-settings__filter-header");
+        button.setButtonText(fmt("setting:add-button-name")).onClick(() => {
+            const value = input.getValue();
+            if (value.length === 0) {
+                input.setValid(false);
+            } else {
+                input.setValid(true);
+                this.data.__languageFilters = {
+                    type: this.data.__languageFilters.type,
+                    list: Array.from(new Set([...this.data.__languageFilters.list, value])),
+                };
+                this.display();
+            }
+        });
+
+        for (const value of this.data.__languageFilters.list) {
+            const { input, button } = addFilter(extra);
+
+            input.setValue(value).setDisabled(true);
+            button.setButtonText(fmt("setting:delete-button-name")).onClick(() => {
+                this.data.__languageFilters = {
+                    type: this.data.__languageFilters.type,
+                    list: this.data.__languageFilters.list.filter(v => v !== value),
+                };
                 this.display();
             });
         }

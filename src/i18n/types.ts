@@ -24,6 +24,11 @@ export type LangKey =
     | "setting:ignore-patterns-description"
     | "setting:language-mappings-name"
     | "setting:language-mappings-description"
+    | "setting:language-filter-name"
+    | "setting:language-filter-description"
+    | "setting:language-filter-option-off"
+    | "setting:language-filter-option-whitelist"
+    | "setting:language-filter-option-blacklist"
     | "setting:add-button-name"
     | "setting:delete-button-name"
     | "setting:reset-button-name";

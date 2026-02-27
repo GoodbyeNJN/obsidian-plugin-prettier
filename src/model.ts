@@ -1,4 +1,4 @@
-import { isNullish, isPlainObject } from "@goodbyenjn/utils/remeda";
+import { isNullish, isNumber, isPlainObject } from "@goodbyenjn/utils/remeda";
 
 import { versionStrToNum } from "./utils/version";
 
@@ -16,6 +16,7 @@ export interface Settings {
     removeExtraSpaces: boolean;
     addTrailingSpaces: boolean;
     languageMappings: Record<string, string>;
+    __languageFilters: { type: "" | "whitelist" | "blacklist"; list: string[] };
     formatOptions: Options;
     ignorePatterns: string;
 }
@@ -50,6 +51,7 @@ export const getDefaultSettings = (): Settings => ({
     removeExtraSpaces: false,
     addTrailingSpaces: false,
     languageMappings: {},
+    __languageFilters: { type: "", list: [] },
     formatOptions: getDefaultFormatOptions(),
     ignorePatterns: getDefaultIgnorePatterns(),
 });
@@ -64,7 +66,7 @@ export const migrate = (data: unknown): Data => {
     }
 
     // 1.x.x -> 2.0.0
-    if (!Object.hasOwn(data, "version")) {
+    if (!Object.hasOwn(data, "version") || !isNumber(data.version)) {
         const dataV1 = data as unknown as Settings;
         const dataV2: Data = {
             version: versionStrToNum("2.0.0"),
@@ -89,6 +91,21 @@ export const migrate = (data: unknown): Data => {
         return migrate(dataV2_0_1);
     }
 
-    // 2.0.1
+    // <2.1.0 -> 2.1.0
+    if (data.version < versionStrToNum("2.1.0")) {
+        const dataV2_x_x = data as unknown as Data;
+        const dataV2_1_0: Data = {
+            version: versionStrToNum("2.1.0"),
+            settings: {
+                // @ts-expect-error
+                __languageFilters: getDefaultSettings().__languageFilters,
+                ...dataV2_x_x.settings,
+            },
+        };
+
+        return migrate(dataV2_1_0);
+    }
+
+    // 2.1.0
     return data as unknown as Data;
 };

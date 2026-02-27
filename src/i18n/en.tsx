@@ -57,8 +57,28 @@ export const EN = {
         </>
     ),
     "setting:language-mappings-name": "Code block language mappings",
-    "setting:language-mappings-description":
-        "Map code block languages from one to another. For example, after setting the mapping `dataviewjs → js`, Prettier will format all `dataviewjs` code blocks as `js` language.",
+    "setting:language-mappings-description": (
+        <>
+            Map code block languages from one to another. For example, after setting the mapping
+            <code>dataviewjs → js</code>, Prettier will format all <code>dataviewjs</code> code
+            blocks as <code>js</code>
+            language.
+        </>
+    ),
+    "setting:language-filter-name": "Code block language filter",
+    "setting:language-filter-description": (
+        <>
+            Specify which code block languages to format using a whitelist or blacklist. For
+            example, whitelist mode with <code>js</code> formats only <code>js</code> code blocks,
+            while blacklist mode with <code>js</code> formats all code blocks except <code>js</code>
+            . This filter applies before language mappings, e.g., whitelisting{" "}
+            <code>dataviewjs</code> with a<code>dataviewjs → js</code> mapping will only format{" "}
+            <code>dataviewjs</code> code blocks as <code>js</code>.
+        </>
+    ),
+    "setting:language-filter-option-off": "Off",
+    "setting:language-filter-option-whitelist": "Whitelist",
+    "setting:language-filter-option-blacklist": "Blacklist",
     "setting:reset-button-name": "Reset",
     "setting:add-button-name": "Add",
     "setting:delete-button-name": "Delete",

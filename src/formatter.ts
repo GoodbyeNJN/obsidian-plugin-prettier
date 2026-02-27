@@ -166,14 +166,22 @@ export class Formatter {
             pluginTypescript,
             pluginYaml,
         ];
-        const __languageMappings = new Map(Object.entries(this.settings.languageMappings));
+
+        const { languageMappings, __languageFilters, formatOptions, formatCodeBlock } =
+            this.settings;
+        const __languageMappings = new Map(Object.entries(languageMappings || {}));
+        const __languageFilter = {
+            type: __languageFilters.type,
+            list: new Set(__languageFilters.list),
+        };
 
         return {
             parser,
             plugins,
             __languageMappings,
-            ...this.settings.formatOptions,
-            embeddedLanguageFormatting: this.settings.formatCodeBlock ? "auto" : "off",
+            __languageFilter,
+            ...formatOptions,
+            embeddedLanguageFormatting: formatCodeBlock ? "auto" : "off",
         };
     }
 

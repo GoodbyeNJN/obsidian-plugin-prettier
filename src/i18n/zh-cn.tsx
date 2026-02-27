@@ -53,8 +53,28 @@ export const ZH_CN = {
         </>
     ),
     "setting:language-mappings-name": "代码块语言映射",
-    "setting:language-mappings-description":
-        "将代码块语言从一种映射到另一种。例如，设置 `dataviewjs → js` 的映射后，Prettier 将对所有 `dataviewjs` 代码块使用 `js` 语言格式化。",
+    "setting:language-mappings-description": (
+        <>
+            将代码块语言从一种映射到另一种。例如，设置 <code>dataviewjs → js</code>{" "}
+            的映射后，Prettier 将对所有 <code>dataviewjs</code> 代码块使用 <code>js</code>{" "}
+            语言格式化。
+        </>
+    ),
+    "setting:language-filter-name": "代码块语言过滤器",
+    "setting:language-filter-description": (
+        <>
+            使用白名单或黑名单指定要格式化的代码块语言。例如，使用 <code>js</code>{" "}
+            的白名单模式只会格式化 <code>js</code>
+            代码块，而使用 <code>js</code> 的黑名单模式会格式化除 <code>js</code>
+            外的所有代码块。此过滤器应用于语言映射之前。例如，将 <code>dataviewjs</code>{" "}
+            列入白名单并设置 <code>dataviewjs → js</code> 的映射后，只会将 <code>dataviewjs</code>{" "}
+            代码块作为 <code>js</code>
+            语言格式化。
+        </>
+    ),
+    "setting:language-filter-option-off": "关闭",
+    "setting:language-filter-option-whitelist": "白名单",
+    "setting:language-filter-option-blacklist": "黑名单",
     "setting:reset-button-name": "重置",
     "setting:add-button-name": "添加",
     "setting:delete-button-name": "删除",
