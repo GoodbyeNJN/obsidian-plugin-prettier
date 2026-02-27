@@ -27,6 +27,7 @@ const formatOptionsHiddenDefaults = {
   locEnd: null,
   getVisitorKeys: null,
   __languageMappings: new Map(),
+  __languageFilters: { type: "", list: new Set() },
 };
 `.trim(),
     },
@@ -43,7 +44,16 @@ const formatOptionsHiddenDefaults = {
       if (!lang) {
         return;
       }
-      const language = options.__languageMappings?.get(lang) || lang;
+
+      const { type, list } = options.__languageFilters;
+      if (
+        (type === "blacklist" && list.has(lang)) ||
+        (type === "whitelist" && !list.has(lang))
+      ) {
+        return;
+      }
+
+      const language = options.__languageMappings.get(lang) || lang;
 `.trim(),
     },
 ];
